@@ -1,0 +1,22 @@
+Package: rqmoms
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Authors@R: person("Sebastian", "Stöckl", email = "sebastian.stoeckl@uni.li", role = c("aut", "cre"), 
+    comment = c(ORCID = "0000-0002-4196-6093"))
+Description: More about what it does (maybe more than one line).
+    Continuation lines should be indented.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    cli,
+    dplyr,
+    purrr,
+    stats,
+    tibble
