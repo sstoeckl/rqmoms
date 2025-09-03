@@ -21,7 +21,20 @@ applySerial <- function(dfGrouped, func_main, params) {
 }
 
 
-# filter options (mirrors Python signature)
+#' Filter option rows by moneyness, delta windows and quality flags
+#'
+#' Mirrors the Python helper: removes in-the-money quotes and rows
+#' outside delta windows; optionally enforces open interest / bid / min price.
+#'
+#' @param optdata A data frame with columns `mnes`, optional `delta`,
+#'   and optionally `open_interest`, `best_bid`, `best_offer`, `prem`.
+#' @param filter A list with bounds (see [rq_default_params()]$filter),
+#'   e.g. `mnes_lim`, `delta_put_lim`, `delta_call_lim`, `open_int_zero`,
+#'   `best_bid_zero`, `min_price`.
+#' @return A filtered data frame (sorted by `id`, `date`, `mnes` if present).
+#' @examples
+#' # keep only OTM & within delta windows
+#' head(filter_options(qmoms_surface, rq_default_params()$filter))
 #' @export
 filter_options <- function(optdata, filter) {
   g1 <- (optdata$mnes >= filter$mnes_lim[1]) & (optdata$mnes <= filter$mnes_lim[2])
@@ -37,7 +50,26 @@ filter_options <- function(optdata, filter) {
 }
 
 
-# get zero rate for maturity (mirrors Python get_rate_for_maturity)
+#' Interpolate a zero rate for a given maturity (or merge rates into a surface)
+#'
+#' Interpolates the zero curve by `date` and `days`, returning either a single
+#' scalar rate (when `date` and `days` are given) or merging a `rate` column
+#' into a surface data frame (`df_surf`).
+#'
+#' @param df_rate Data frame with `date`, `days`, `rate` (decimal p.a.).
+#' @param df_surf Optional surface with `date`, `days`. If supplied, returns
+#'   `df_surf` with a `rate` column merged by date/maturity.
+#' @param date Optional single `Date` for scalar interpolation.
+#' @param days Optional single integer days-to-maturity for scalar interpolation.
+#' @return A numeric rate (if `date` & `days` are given) or a data frame with
+#'   a `rate` column (if `df_surf` is given).
+#' @examples
+#' # scalar interpolation
+#' one <- subset(qmoms_surface, id == qmoms_surface$id[1] & days == qmoms_surface$days[1])
+#' get_rate_for_maturity(qmoms_zerocd, date = one$date[1], days = one$days[1])
+#'
+#' # merge into a surface
+#' head(get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface))
 #' @export
 get_rate_for_maturity <- function(df_rate, df_surf = NULL, date = NULL, days = NULL) {
   if (is.null(df_surf) && (is.null(date) || is.null(days))) {

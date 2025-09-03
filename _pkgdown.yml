@@ -11,7 +11,8 @@ navbar:
   components:
     github:
       icon: fa-github
-      href: https://github.com/sstoeckl/rqmoms
+      aria-label: "GitHub"
+      href: https://github.com/<YOUR_GH_USERNAME>/rqmoms
 home:
   title: rqmoms
   description: Pure R re-implementation of option-implied moments (Python 'qmoms').
