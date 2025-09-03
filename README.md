@@ -425,14 +425,3 @@ research by the authors.
 ## License
 
 MIT. See `LICENSE`.
-
-
-    ---
-
-    ### Notes
-
-    - The README now **only** uses packaged datasets, so it knits cleanly and works on the pkgdown site.
-    - The `group_map()` sections are corrected to use **`.y`** for keys — fixing your error.
-    - I left both grouped approaches (manual `group_map` and the wrapper) so users can pick their style.
-    - The README references the **Python parity** vignette (to be added next). If you want, I can drop in a vignette skeleton that runs R↔Python checks over all groups and prints a tidy diff table.
-    ::contentReference[oaicite:0]{index=0}
