@@ -1,0 +1,3 @@
+[submodule "python/qmoms_src"]
+	path = python/qmoms_src
+	url = https://github.com/vilkovgr/qmoms

@@ -1,22 +1,29 @@
 Package: rqmoms
-Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Authors@R: person("Sebastian", "Stöckl", email = "sebastian.stoeckl@uni.li", role = c("aut", "cre"), 
-    comment = c(ORCID = "0000-0002-4196-6093"))
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person("Sebastian", "Stöckl", , "sebastian.stoeckl@uni.li", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-4196-6093"))
+Description: What the package does (one paragraph).
 License: MIT + file LICENSE
+URL: https://sstoeckl.github.io/rqmoms/
+BugReports: https://github.com/sstoeckl/rqmoms/issues
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
 Imports: 
     cli,
     dplyr,
+    pracma,
     purrr,
     stats,
-    tibble
+    tibble,
+    vctrs
+Suggests: 
+    testthat (>= 3.0.0),
+    reticulate
+Config/testthat/edition: 3
+LazyData: true
+LazyDataCompression: xz
+Depends: 
+    R (>= 3.5)

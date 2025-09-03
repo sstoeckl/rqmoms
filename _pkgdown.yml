@@ -1,0 +1,35 @@
+url: https://sstoeckl.github.io/rqmoms/
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#0b8bd9"
+    pkgdown-nav-height: 60px
+navbar:
+  structure:
+    left: [reference, articles, news]
+    right: [github]
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/sstoeckl/rqmoms
+home:
+  title: rqmoms
+  description: Pure R re-implementation of option-implied moments (Python 'qmoms').
+reference:
+  - title: Core compute
+    contents:
+      - qmoms_compute
+      - qmoms_compute_bygroup
+  - title: Parameters & helpers
+    contents:
+      - rq_default_params
+      - filter_options
+      - get_rate_for_maturity
+  - title: Internals
+    contents:
+      - has_keyword("internal")
+articles:
+  - title: Python parity
+    navbar: ~
+    contents:
+      - python-parity
