@@ -2,19 +2,31 @@ name: parity
 
 on:
   workflow_dispatch:
+    inputs:
+      qmoms_ref:
+        description: "vilkovgr/qmoms git ref main"
+        required: false
+        default: "main"
   schedule:
-    - cron: "0 3 * * 1"   # Mondays 03:00 UTC (optional)
+    - cron: "0 3 * * 1"  # optional: Mondays 03:00 UTC
 
 jobs:
   parity:
     runs-on: ubuntu-latest
 
+    env:
+      # Tell vignette/tests to run Python comparison
+      RQMOMS_BUILD_PY: "1"
+      # Path to the venv reticulate should use
+      RQMOMS_VENV: ${{ github.workspace }}/python/.venv
+      # Which ref of vilkovgr/qmoms to install (override via workflow_dispatch input)
+      QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
+
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout rqmoms
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
@@ -34,28 +46,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
-      - name: Create venv and install Python deps + qmoms (editable)
+      - name: Create venv and install Python deps + vilkovgr/qmoms from GitHub
         shell: bash
         run: |
           python -m venv python/.venv
-          python -m pip install --upgrade pip setuptools wheel build
+          source python/.venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
-          SRC="python/qmoms_src"
-          if [ ! -d "$SRC" ]; then SRC="python/qmoms"; fi
-          python -m pip install -e "$SRC"
+          # Install qmoms directly from GitHub at the requested ref
+          python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
 
-      - name: Run tests with Python parity enabled
-        env:
-          RQMOMS_BUILD_PY: "1"
-          RQMOMS_VENV: ${{ github.workspace }}/python/.venv
-        run: |
-          Rscript -e 'devtools::test()'
+      - name: Run tests (with Python parity enabled)
+        run: Rscript -e 'devtools::test()'
 
-      - name: Build vignettes and pkgdown site (with comparison)
-        env:
-          RQMOMS_BUILD_PY: "1"
-          RQMOMS_VENV: ${{ github.workspace }}/python/.venv
+      - name: Build vignettes and pkgdown (with comparison)
         run: |
           Rscript -e 'devtools::build_vignettes()'
           Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
