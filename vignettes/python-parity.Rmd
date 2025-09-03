@@ -1,0 +1,203 @@
+---
+title: "Python parity: rqmoms vs vilkovgr/qmoms"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Python parity: rqmoms vs vilkovgr/qmoms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = ">"
+)
+```
+
+## Goal
+
+This vignette demonstrates **numerical parity** between the pure-R implementation in `rqmoms` and the original Python package **`vilkovgr/qmoms`** for the same inputs and parameters.
+
+It is safe to knit on CI/CRAN (Python parts are skipped by default).
+To **enable** the Python comparison locally:
+
+1. Create a virtualenv at `python/.venv` and install the Python repo (editable) into it, or set `RQMOMS_VENV` to your venv path.
+2. Set `RQMOMS_BUILD_PY=1` in your session (or `.Renviron`).
+
+For a proper setup of python for testing refer to this script: "dev/01-setup-python.R"
+---
+
+## Libraries & packaged data
+
+```{r}
+library(rqmoms)
+library(dplyr)
+
+# Packaged datasets ship with the package
+str(qmoms_surface)
+head(qmoms_zerocd)
+```
+
+---
+
+## Detect (optional) Python reference
+
+```{r py-detect, message=FALSE, warning=FALSE}
+has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1")
+if (has_py) {
+  venv <- Sys.getenv("RQMOMS_VENV", file.path("python", ".venv"))
+  ok <- FALSE
+  try({
+    reticulate::use_virtualenv(venv, required = TRUE)
+    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
+    # Prefer submodule path if present
+    srcs <- c(file.path("python","qmoms_src"), file.path("python","qmoms"))
+    srcs <- srcs[dir.exists(srcs)]
+    if (length(srcs)) {
+      reticulate::py_run_string(sprintf(
+        "import sys; sys.path.insert(0, r'%s')",
+        normalizePath(srcs[[1]], winslash = "/", mustWork = TRUE)
+      ))
+    }
+    reticulate::import("qmoms")
+    ok <- TRUE
+  }, silent = TRUE)
+  has_py <- ok
+}
+
+if (!has_py) {
+  cat("**Python parity is disabled.** Set `RQMOMS_BUILD_PY=1` and point `RQMOMS_VENV` to a valid virtualenv to run the comparison.\n")
+}
+```
+
+For convenience we define a small wrapper (only used when `has_py = TRUE`):
+
+```{r py-wrapper, eval=has_py}
+py_compute <- function(mnes, vol, days, rate, params) {
+  m <- reticulate::import("qmoms")
+  out <- m$qmoms_compute(
+    mnes = as.numeric(mnes), vol = as.numeric(vol),
+    days = as.integer(days), rate = as.numeric(rate),
+    params = reticulate::r_to_py(params, convert = TRUE),
+    output = "pandas"
+  )
+  r <- reticulate::py_to_r(out)
+  if (is.atomic(r)) { nm <- names(r); r <- as.list(r); if (!is.null(nm)) names(r) <- nm
+  } else if (is.data.frame(r)) { r <- as.list(r[1, , drop = TRUE]) }
+  r
+}
+```
+
+---
+
+## Single surface: side-by-side
+
+```{r one-surface-r}
+params <- rq_default_params()
+one <- subset(qmoms_surface,
+              id == qmoms_surface$id[1] & days == qmoms_surface$days[1])
+r30 <- get_rate_for_maturity(qmoms_zerocd, date = one$date[1], days = one$days[1])
+
+r_out <- qmoms_compute(one$mnes, one$impl_volatility, one$days[1], r30,
+                       params = params, output = "list")
+str(r_out)
+```
+
+```{r one-surface-compare, eval=has_py}
+py_out <- py_compute(one$mnes, one$impl_volatility, one$days[1], r30, params)
+
+keys <- intersect(names(r_out), names(py_out))
+tab <- tibble::tibble(
+  metric = keys,
+  R      = unlist(r_out[keys]),
+  Python = unlist(py_out[keys]),
+  abs_diff = abs(R - Python)
+)
+tab <- dplyr::arrange(tab, desc(abs_diff))
+knitr::kable(head(tab, 20), digits = 6, caption = "Single surface: top absolute differences")
+```
+
+---
+
+## All groups: parity summary
+
+We merge the zero curve into the surface and run both engines for every `(id, date, days)` group.
+
+```{r all-groups-setup}
+surf_r <- get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface)
+groups <- split(surf_r, list(surf_r$id, surf_r$date, surf_r$days), drop = TRUE)
+length(groups)
+```
+
+```{r all-groups-compare, eval=has_py, message=FALSE, warning=FALSE}
+key_metrics <- c("smfiv","mfiv_bkm","mfiv_bjn",
+                 "smfivd","mfivd_bkm","mfivd_bjn",
+                 "mfis","mfik","rix","rixnorm","slopedn","slopeup")
+
+compare_one <- function(g) {
+  rlist <- qmoms_compute(g$mnes, g$impl_volatility, g$days[1], g$rate[1],
+                         params = params, output = "list")
+  pylist <- py_compute(g$mnes, g$impl_volatility, g$days[1], g$rate[1], params)
+  keys <- intersect(key_metrics, intersect(names(rlist), names(pylist)))
+  if (!length(keys)) return(NULL)
+  tibble::tibble(
+    id   = g$id[1], date = g$date[1], days = g$days[1],
+    metric = keys,
+    R = unlist(rlist[keys]),
+    Python = unlist(pylist[keys]),
+    abs_diff = abs(R - Python)
+  )
+}
+
+all_cmp <- vctrs::vec_rbind(!!!lapply(groups, compare_one))
+
+summary_tab <- all_cmp |>
+  dplyr::group_by(metric) |>
+  dplyr::summarise(
+    n        = dplyr::n(),
+    mean_abs = mean(abs_diff, na.rm = TRUE),
+    p95_abs  = quantile(abs_diff, 0.95, na.rm = TRUE),
+    max_abs  = max(abs_diff, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  dplyr::arrange(desc(max_abs))
+
+knitr::kable(summary_tab, digits = 6, caption = "All groups: absolute-difference summary by metric")
+```
+
+### Visual check (example metric)
+
+```{r hist-plot, eval=has_py}
+m <- "mfiv_bkm"
+x <- all_cmp$abs_diff[all_cmp$metric == m]
+hist(x, breaks = 30, main = sprintf("Absolute differences: %s", m), xlab = "abs diff")
+```
+
+---
+
+## Tolerances used in automated tests
+
+For reference, the package’s tests use these tolerances when comparing R to Python:
+
+* Variance integrals (`smfiv`, `mfiv_bkm`, `mfiv_bjn`, semivariances): **5e-4**
+* Higher moments (`mfis`, `mfik`): **5e-3** and **5e-2**, respectively
+* Slopes (`slopedn`, `slopeup`): **5e-3**
+* `rix`, `rixnorm`: **5e-4**
+* CVIX/TLM windows: **5e-4** / **5e-2** (window-dependent)
+
+You should see observed differences comfortably **within** these thresholds when `RQMOMS_BUILD_PY=1` is enabled.
+
+---
+
+## Notes
+
+* Interpolation uses **PCHIP** with clamping (via `pracma::pchip`) to mirror SciPy’s `PchipInterpolator`.
+* Grid, integration weights, slope sign convention, and window logic are implemented identically to the Python reference.
+* Packaged datasets `qmoms_surface` and `qmoms_zerocd` are derived from the Python examples; rates are converted to **decimal** if the CSV used percent.
+
+---
+
+## Credits
+
+This parity check compares against **[`vilkovgr/qmoms`](https://github.com/vilkovgr/qmoms)**, which remains the reference implementation. The R package aims for numerical identity given the same inputs and parameters.
+
