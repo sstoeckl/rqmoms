@@ -21,7 +21,7 @@ jobs:
       RQMOMS_BUILD_PY: "1"
       RQMOMS_VENV: ${{ github.workspace }}/python/.venv
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
-      RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python   # <—
+      RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
 
     steps:
       - name: Checkout rqmoms
@@ -41,7 +41,7 @@ jobs:
             any::devtools
             any::pkgdown
             any::rmarkdown
-            any::reticulate                           # <—
+            any::reticulate
           needs: website
 
       - name: Set up Python 3.11
