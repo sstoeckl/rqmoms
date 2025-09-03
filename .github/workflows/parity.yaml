@@ -8,7 +8,7 @@ on:
         required: false
         default: "main"
   schedule:
-    - cron: "0 3 * * 1"  # optional: Mondays 03:00 UTC
+    - cron: "0 3 * * 1"
 
 permissions:
   contents: write
@@ -18,12 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Tell vignette/tests to run Python comparison
       RQMOMS_BUILD_PY: "1"
-      # Path to the venv reticulate should use
       RQMOMS_VENV: ${{ github.workspace }}/python/.venv
-      # Which ref of vilkovgr/qmoms to install (override via workflow_dispatch input)
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
+      RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python   # <—
 
     steps:
       - name: Checkout rqmoms
@@ -43,6 +41,7 @@ jobs:
             any::devtools
             any::pkgdown
             any::rmarkdown
+            any::reticulate                           # <—
           needs: website
 
       - name: Set up Python 3.11
@@ -58,8 +57,11 @@ jobs:
           source python/.venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
-          # Install qmoms directly from GitHub at the requested ref
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
+
+      - name: Debug reticulate config (one-off; safe to keep)
+        run: |
+          Rscript -e 'print(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON"))); if (requireNamespace("reticulate", quietly=TRUE)) reticulate::py_discover_config()'
 
       - name: Run tests (with Python parity enabled)
         run: Rscript -e 'devtools::test()'
