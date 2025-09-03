@@ -1,0 +1,67 @@
+name: parity
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"   # Mondays 03:00 UTC (optional)
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::devtools
+            any::pkgdown
+            any::rmarkdown
+          needs: website
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv and install Python deps + qmoms (editable)
+        shell: bash
+        run: |
+          python -m venv python/.venv
+          python -m pip install --upgrade pip setuptools wheel build
+          python -m pip install numpy pandas scipy tqdm
+          SRC="python/qmoms_src"
+          if [ ! -d "$SRC" ]; then SRC="python/qmoms"; fi
+          python -m pip install -e "$SRC"
+
+      - name: Run tests with Python parity enabled
+        env:
+          RQMOMS_BUILD_PY: "1"
+          RQMOMS_VENV: ${{ github.workspace }}/python/.venv
+        run: |
+          Rscript -e 'devtools::test()'
+
+      - name: Build vignettes and pkgdown site (with comparison)
+        env:
+          RQMOMS_BUILD_PY: "1"
+          RQMOMS_VENV: ${{ github.workspace }}/python/.venv
+        run: |
+          Rscript -e 'devtools::build_vignettes()'
+          Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs
