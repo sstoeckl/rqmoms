@@ -21,7 +21,6 @@ jobs:
       RQMOMS_BUILD_PY: "1"
       RQMOMS_VENV: ${{ github.workspace }}/python/.venv
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
-      RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
 
     steps:
       - name: Checkout rqmoms
@@ -34,7 +33,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install R dependencies
+      - name: Install R dependencies (incl. reticulate)
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
@@ -50,7 +49,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Create venv and install Python deps + vilkovgr/qmoms from GitHub
+      - name: Create venv and install Python deps + vilkovgr/qmoms
         shell: bash
         run: |
           python -m venv python/.venv
@@ -59,7 +58,12 @@ jobs:
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
 
-      - name: Debug reticulate config (one-off; safe to keep)
+      # >>> This step is the critical fix <<<
+      - name: Force reticulate to use the venv
+        run: |
+          echo "RETICULATE_PYTHON=${{ github.workspace }}/python/.venv/bin/python" >> $GITHUB_ENV
+
+      - name: Debug reticulate config
         run: |
           Rscript -e 'print(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON"))); if (requireNamespace("reticulate", quietly=TRUE)) reticulate::py_discover_config()'
 
