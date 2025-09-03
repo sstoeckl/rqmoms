@@ -147,7 +147,25 @@ qmoms_compute <- function(mnes, vol, days, rate, params = rq_default_params(), o
 }
 
 
-#' Compute by group (mirrors Python qmoms_compute_bygroup)
+#' Compute qmoms for a single grouped surface (convenience wrapper)
+#'
+#' Accepts one (id, date, days) surface and returns a one-row tibble with
+#' the keys plus all qmoms metrics. Column names can be remapped via `cols_map`.
+#'
+#' @param x A data.frame/tibble containing a *single* surface. Must include
+#'   columns for moneyness and IV (default: `mnes`, `impl_volatility`);
+#'   optionally `rate` if you don’t pass `rate` explicitly.
+#' @param groupparams A list of the group to be treated as well as the parameters as returned by [rq_default_params()].
+#' @param cols_map Optional named list mapping required columns in `x` to the
+#'   expected names, e.g. `list(id="ID", date="Date", days="Days", rate="Rate",
+#'   mnes="M", impl_volatility="IV")`.
+#' @param id,date,days,rate Optional scalar overrides for the group keys and rate.
+#'   If `rate` is `NULL`, the function will look for a `rate` column in `x`.
+#'
+#' @return A one-row tibble with `id`, `date`, `days` and all qmoms metrics.
+#' @examples
+#' g <- subset(qmoms_surface, id == qmoms_surface$id[1] & days == qmoms_surface$days[1])
+#' qmoms_compute_bygroup(list(g, rq_default_params()))
 #' @export
 qmoms_compute_bygroup <- function(groupparams, id = NULL, rate = NULL, days = NULL, date = NULL,
                                   cols_map = list(id = "id", date = "date", days = "days", rate = "rate", mnes = "mnes", impl_volatility = "impl_volatility")) {

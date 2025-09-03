@@ -2,7 +2,7 @@
 % Please edit documentation in R/qmoms.R
 \name{qmoms_compute_bygroup}
 \alias{qmoms_compute_bygroup}
-\title{Compute by group (mirrors Python qmoms_compute_bygroup)}
+\title{Compute qmoms for a single grouped surface (convenience wrapper)}
 \usage{
 qmoms_compute_bygroup(
   groupparams,
@@ -14,6 +14,27 @@ qmoms_compute_bygroup(
     impl_volatility = "impl_volatility")
 )
 }
+\arguments{
+\item{groupparams}{A list of the group to be treated as well as the parameters as returned by \code{\link[=rq_default_params]{rq_default_params()}}.}
+
+\item{id, date, days, rate}{Optional scalar overrides for the group keys and rate.
+If \code{rate} is \code{NULL}, the function will look for a \code{rate} column in \code{x}.}
+
+\item{cols_map}{Optional named list mapping required columns in \code{x} to the
+expected names, e.g. \code{list(id="ID", date="Date", days="Days", rate="Rate", mnes="M", impl_volatility="IV")}.}
+
+\item{x}{A data.frame/tibble containing a \emph{single} surface. Must include
+columns for moneyness and IV (default: \code{mnes}, \code{impl_volatility});
+optionally \code{rate} if you don’t pass \code{rate} explicitly.}
+}
+\value{
+A one-row tibble with \code{id}, \code{date}, \code{days} and all qmoms metrics.
+}
 \description{
-Compute by group (mirrors Python qmoms_compute_bygroup)
+Accepts one (id, date, days) surface and returns a one-row tibble with
+the keys plus all qmoms metrics. Column names can be remapped via \code{cols_map}.
+}
+\examples{
+g <- subset(qmoms_surface, id == qmoms_surface$id[1] & days == qmoms_surface$days[1])
+qmoms_compute_bygroup(list(g, rq_default_params()))
 }

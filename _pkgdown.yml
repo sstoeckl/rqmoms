@@ -1,6 +1,7 @@
 url: https://sstoeckl.github.io/rqmoms/
 template:
   bootstrap: 5
+  bootswatch: spacelab
   bslib:
     primary: "#0b8bd9"
     pkgdown-nav-height: 60px
@@ -26,6 +27,10 @@ reference:
       - rq_default_params
       - filter_options
       - get_rate_for_maturity
+  - title: Data
+    contents:
+      - qmoms_surface
+      - qmoms_zerocd
   - title: Internals
     contents:
       - has_keyword("internal")
