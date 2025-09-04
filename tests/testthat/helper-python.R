@@ -5,7 +5,12 @@ pkg_root <- normalizePath(file.path(testthat::test_path(), "..", ".."),
                           winslash = "/", mustWork = TRUE)
 
 # Allow override via env var if you want: RQMOMS_VENV="path/to/.venv"
-venv <- Sys.getenv("RQMOMS_VENV", file.path(pkg_root, "python", ".venv"))
+# force the venv before reticulate initializes
+venv <- Sys.getenv("RQMOMS_VENV")
+if (nzchar(venv)) {
+  bin <- file.path(venv, if (.Platform$OS.type == "windows") "Scripts/python.exe" else "bin/python")
+  Sys.setenv(RETICULATE_PYTHON = bin)
+}
 
 ok <- FALSE
 if (dir.exists(venv)) {
