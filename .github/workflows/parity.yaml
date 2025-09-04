@@ -49,6 +49,8 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      # ... (Header/checkout/Setup-R/Setup-Python/venv erstellen wie gehabt)
+
       - name: Create venv and install Python deps + vilkovgr/qmoms
         shell: bash
         run: |
@@ -56,27 +58,33 @@ jobs:
           source python/.venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
-          python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
-          python -c "import sys; print('VENV python:', sys.executable); import numpy; print('numpy:', numpy.__version__)"
+          python -m pip install "git+https://github.com/vilkovgr/qmoms@${{ github.event.inputs.qmoms_ref || 'main' }}"
+          # Sanity check: venv + imports
+          python - <<'PY'
+          import sys, numpy
+          print("VENV python:", sys.executable)
+          print("numpy:", numpy.__version__)
+          try:
+              import qmoms
+              print("qmoms: OK")
+          except Exception as e:
+              print("qmoms import FAILED:", e)
+              raise
+          PY
 
-      # >>> Force the venv per-step for every R process below <<<
+      # --- WICHTIG: Interpreter IM R-PROZESS setzen (nicht nur via env) ---
+
       - name: Debug reticulate config
-        env:
-          RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
         run: |
-          Rscript -e 'print(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON"))); if (requireNamespace("reticulate", quietly=TRUE)) { reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); reticulate::py_discover_config() }'
+          Rscript -e 'Sys.setenv(RQMOMS_VENV=normalizePath("python/.venv"), RETICULATE_PYTHON=normalizePath("python/.venv/bin/python")); cat(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON")), sep="\n"); if (requireNamespace("reticulate", quietly=TRUE)) { reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); reticulate::py_discover_config() }'
 
       - name: Run tests (with Python parity enabled)
-        env:
-          RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
-        run: Rscript -e 'devtools::test()'
+        run: |
+          Rscript -e 'Sys.setenv(RETICULATE_PYTHON=normalizePath("python/.venv/bin/python"), RQMOMS_VENV=normalizePath("python/.venv"), RQMOMS_BUILD_PY="1"); devtools::test()'
 
       - name: Build vignettes and pkgdown (with comparison)
-        env:
-          RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
         run: |
-          Rscript -e 'devtools::build_vignettes()'
-          Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
+          Rscript -e 'Sys.setenv(RETICULATE_PYTHON=normalizePath("python/.venv/bin/python"), RQMOMS_VENV=normalizePath("python/.venv"), RQMOMS_BUILD_PY="1"); devtools::build_vignettes(); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
