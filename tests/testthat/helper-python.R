@@ -8,8 +8,9 @@ pkg_root <- normalizePath(file.path(testthat::test_path(), "..", ".."),
 # force the venv before reticulate initializes
 venv <- Sys.getenv("RQMOMS_VENV")
 if (nzchar(venv)) {
-  bin <- if (.Platform$OS.type == "windows") file.path(venv, "Scripts", "python.exe")
-  else file.path(venv, "bin", "python")
+  bin  <- ifelse(.Platform$OS.type == "windows",
+                 file.path(venv,"Scripts","python.exe"),
+                 file.path(venv,"bin","python"))
   Sys.setenv(RETICULATE_PYTHON = bin)
 }
 
