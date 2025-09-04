@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       qmoms_ref:
-        description: "vilkovgr/qmoms git ref main"
+        description: "vilkovgr/qmoms git ref (branch/tag/SHA)"
         required: false
         default: "main"
   schedule:
@@ -57,17 +57,14 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
-          python -c "import sys,sysconfig,site; print('VENV:', sys.executable); import numpy; print('numpy:', numpy.__version__)"
+          python -c "import sys; print('VENV python:', sys.executable); import numpy; print('numpy:', numpy.__version__)"
 
-      # (Optional) keep this, but step-level env is the real fix
-      - name: Force reticulate to use the venv (best-effort)
-        run: echo "RETICULATE_PYTHON=${{ github.workspace }}/python/.venv/bin/python" >> $GITHUB_ENV
-
+      # >>> Force the venv per-step for every R process below <<<
       - name: Debug reticulate config
         env:
           RETICULATE_PYTHON: ${{ github.workspace }}/python/.venv/bin/python
         run: |
-          Rscript -e 'print(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON"))); if (requireNamespace("reticulate", quietly=TRUE)) reticulate::py_discover_config()'
+          Rscript -e 'print(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON"))); if (requireNamespace("reticulate", quietly=TRUE)) { reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); reticulate::py_discover_config() }'
 
       - name: Run tests (with Python parity enabled)
         env:
@@ -80,7 +77,6 @@ jobs:
         run: |
           Rscript -e 'devtools::build_vignettes()'
           Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
-
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

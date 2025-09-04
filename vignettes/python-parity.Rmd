@@ -13,6 +13,13 @@ knitr::opts_chunk$set(
   comment  = ">"
 )
 ```
+```{r setup2, include=FALSE}
+venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
+bin  <- if (.Platform$OS.type == "windows") file.path(venv,"Scripts","python.exe")
+        else file.path(venv,"bin","python")
+Sys.setenv(RETICULATE_PYTHON = bin)
+
+```
 
 ## Goal
 
