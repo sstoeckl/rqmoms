@@ -76,11 +76,11 @@ jobs:
             reticulate::use_virtualenv(venv, required=TRUE)  # venv binden
             reticulate::py_discover_config()
             reticulate::py_run_string("
-      import sys, numpy, qmoms
-      print('PY:', sys.executable)
-      print('numpy:', numpy.__version__)
-      print('qmoms: OK')
-      ")
+            import sys, numpy, qmoms
+            print('PY:', sys.executable)
+            print('numpy:', numpy.__version__)
+            print('qmoms: OK')
+            ")
           } else {
             stop('reticulate not installed')
           }
