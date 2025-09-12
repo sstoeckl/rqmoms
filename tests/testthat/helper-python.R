@@ -1,11 +1,17 @@
-# Bind venv early & robustly (no RETICULATE_PYTHON from CI)
-Sys.unsetenv("RETICULATE_PYTHON")
-pkg_root <- normalizePath(file.path(testthat::test_path(), "..", ".."),
-                          winslash = "/", mustWork = TRUE)
-
-venv <- Sys.getenv("RQMOMS_VENV", file.path(pkg_root, "python", ".venv"))
-
+Sys.unsetenv("RETICULATE_PYTHON")               # falls CI irgendwas gesetzt hat
+venv <- Sys.getenv("RQMOMS_VENV", "python/.venv")
 has_py <- FALSE
+if (requireNamespace("reticulate", quietly = TRUE)) {
+  try({
+    reticulate::use_virtualenv(venv, required = TRUE)
+    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
+    reticulate::import("qmoms")
+    has_py <- TRUE
+  }, silent = TRUE)
+}
+options(rqmoms.has_py = has_py)
+# ... (rest wie bei dir)
+
 if (requireNamespace("reticulate", quietly = TRUE)) {
   try({
     reticulate::use_virtualenv(venv, required = TRUE)

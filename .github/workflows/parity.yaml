@@ -70,14 +70,19 @@ jobs:
       - name: Debug reticulate config (bind venv inside R)
         run: |
           Rscript - <<'RS'
-          Sys.unsetenv("RETICULATE_PYTHON")                  # alte Bindung entfernen
-          venv <- "python/.venv"
+          Sys.unsetenv("RETICULATE_PYTHON")                  # evtl. geerbte Bindung löschen
+          venv <- "python/.venv"                              # KEIN normalizePath()!
           if (requireNamespace("reticulate", quietly=TRUE)) {
             reticulate::use_virtualenv(venv, required=TRUE)  # venv binden
             reticulate::py_discover_config()
-            reticulate::py_run_string("import numpy, qmoms; print('numpy:', numpy.__version__)")
+            reticulate::py_run_string("
+              import sys, numpy, qmoms
+              print('PY:', sys.executable)
+              print('numpy:', numpy.__version__)
+              print('qmoms: OK')
+              ")
           } else {
-            message("reticulate not installed?")
+            stop('reticulate not installed')
           }
           RS
 
