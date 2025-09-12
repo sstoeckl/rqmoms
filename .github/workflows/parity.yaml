@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Vergleich aktivieren + venv-Pfad für Tests/Vignette
+      # enable Python comparison in tests/vignette
       RQMOMS_BUILD_PY: "1"
       RQMOMS_VENV: ${{ github.workspace }}/python/.venv
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
@@ -53,37 +53,33 @@ jobs:
       - name: Create venv and install Python deps + vilkovgr/qmoms
         shell: bash
         run: |
+          set -euxo pipefail
           python -m venv python/.venv
           source python/.venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
+          # Sanity check: venv interpreter + imports
           python - <<'PY'
-          import sys
-          print("VENV python:", sys.executable)
-          import numpy; print("numpy:", numpy.__version__)
-          import qmoms; print("qmoms import: OK")
-          PY
+import sys, numpy
+print("VENV python:", sys.executable)
+print("numpy:", numpy.__version__)
+import qmoms
+print("qmoms import: OK")
+PY
 
-      # --- WICHTIG: Kein RETICULATE_PYTHON setzen. In R-Skripten venv binden. ---
+      # IMPORTANT: don't set RETICULATE_PYTHON. Bind venv *inside* R before init.
 
       - name: Debug reticulate config (bind venv inside R)
         env:
-          RETICULATE_PYTHON: ""     # ← hosted Toolcache-Setting hart überschreiben
+          RETICULATE_PYTHON: ""     # clear any hosted-toolcache override
         run: |
           Rscript - <<'RS'
-          # keine geerbte Toolcache-Bindung
           Sys.unsetenv("RETICULATE_PYTHON")
-          venv <- "python/.venv"    # KEIN normalizePath() hier
-
-          if (requireNamespace("reticulate", quietly = TRUE)) {
-            # venv binden, bevor Python initialisiert wird
-            reticulate::use_virtualenv(venv, required = TRUE)
-
-            # anzeigen, welchen Interpreter reticulate nun nimmt
+          venv <- "python/.venv"
+          if (requireNamespace("reticulate", quietly=TRUE)) {
+            reticulate::use_virtualenv(venv, required=TRUE)
             reticulate::py_discover_config()
-
-            # sanity-check: numpy + qmoms aus venv
             reticulate::py_run_string('import sys, numpy, qmoms; print("PY:", sys.executable); print("numpy:", numpy.__version__); print("qmoms: OK")')
           } else {
             stop("reticulate not installed")
@@ -92,23 +88,23 @@ jobs:
 
       - name: Run tests (with Python parity enabled)
         env:
-          RETICULATE_PYTHON: ""     # ← Schritt-Env säubern
+          RETICULATE_PYTHON: ""     # ensure a clean R session env
         run: |
           Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY = "1", RQMOMS_VENV = "python/.venv")
+          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
           Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required = TRUE)
+          reticulate::use_virtualenv("python/.venv", required=TRUE)
           devtools::test()
           RS
 
       - name: Build vignettes and pkgdown (with comparison)
         env:
-          RETICULATE_PYTHON: ""     # ← Schritt-Env säubern
+          RETICULATE_PYTHON: ""     # ensure a clean R session env
         run: |
           Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY = "1", RQMOMS_VENV = "python/.venv")
+          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
           Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required = TRUE)
+          reticulate::use_virtualenv("python/.venv", required=TRUE)
           devtools::build_vignettes()
           pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
           RS
