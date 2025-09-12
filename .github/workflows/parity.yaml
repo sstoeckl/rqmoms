@@ -61,12 +61,12 @@ jobs:
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
           # Sanity check: venv interpreter + imports
           python - <<'PY'
-import sys, numpy
-print("VENV python:", sys.executable)
-print("numpy:", numpy.__version__)
-import qmoms
-print("qmoms import: OK")
-PY
+          import sys, numpy
+          print("VENV python:", sys.executable)
+          print("numpy:", numpy.__version__)
+          import qmoms
+          print("qmoms import: OK")
+          PY
 
       # IMPORTANT: don't set RETICULATE_PYTHON. Bind venv *inside* R before init.
 
