@@ -14,12 +14,26 @@ knitr::opts_chunk$set(
 )
 ```
 ```{r setup2, include=FALSE}
-venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
-bin  <- ifelse(.Platform$OS.type == "windows",
-               file.path(venv,"Scripts","python.exe"),
-               file.path(venv,"bin","python"))
-Sys.setenv(RETICULATE_PYTHON = bin)
+has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1")
 
+if (has_py && requireNamespace("reticulate", quietly = TRUE)) {
+  # Wichtig: keine geerbte Toolcache-Bindung
+  Sys.unsetenv("RETICULATE_PYTHON")
+  venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
+  ok <- FALSE
+  try({
+    reticulate::use_virtualenv(venv, required = TRUE)
+    reticulate::py_run_string(paste("import numpy as np; import qmoms; & ",
+                              "import sys; print('PY:', sys.executable); & ",
+                              "print('numpy:', np.__version__)"))
+    ok <- TRUE
+  }, silent = TRUE)
+  has_py <- ok
+}
+
+if (!has_py) {
+  cat("**Python parity is disabled.** Set `RQMOMS_BUILD_PY=1` and point `RQMOMS_VENV` to your virtualenv to run the comparison.\n")
+}
 ```
 
 ## Goal

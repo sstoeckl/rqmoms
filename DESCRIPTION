@@ -1,5 +1,5 @@
 Package: rqmoms
-Title: What the Package Does (One Line, Title Case)
+Title: Calculare risk neutral moments (port of qmoms package from Gregory Vilkov)
 Version: 0.9.0.0
 Authors@R: 
     person("Sebastian", "Stöckl", , "sebastian.stoeckl@uni.li", role = c("aut", "cre"),

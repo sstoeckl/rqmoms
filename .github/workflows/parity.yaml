@@ -8,7 +8,7 @@ on:
         required: false
         default: "main"
   schedule:
-    - cron: "0 3 * * 1"
+    - cron: "0 3 * * 1"  # optional weekly run
 
 permissions:
   contents: write
@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Vergleich aktivieren + venv-Pfad für Tests/Vignette
       RQMOMS_BUILD_PY: "1"
       RQMOMS_VENV: ${{ github.workspace }}/python/.venv
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
@@ -49,8 +50,6 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      # ... (Header/checkout/Setup-R/Setup-Python/venv erstellen wie gehabt)
-
       - name: Create venv and install Python deps + vilkovgr/qmoms
         shell: bash
         run: |
@@ -58,33 +57,48 @@ jobs:
           source python/.venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel build setuptools-scm
           python -m pip install numpy pandas scipy tqdm
-          python -m pip install "git+https://github.com/vilkovgr/qmoms@${{ github.event.inputs.qmoms_ref || 'main' }}"
-          # Sanity check: venv + imports
+          python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
           python - <<'PY'
-          import sys, numpy
-          print("VENV python:", sys.executable)
-          print("numpy:", numpy.__version__)
-          try:
-              import qmoms
-              print("qmoms: OK")
-          except Exception as e:
-              print("qmoms import FAILED:", e)
-              raise
-          PY
+import sys
+print("VENV python:", sys.executable)
+import numpy; print("numpy:", numpy.__version__)
+import qmoms; print("qmoms import: OK")
+PY
 
-      # --- WICHTIG: Interpreter IM R-PROZESS setzen (nicht nur via env) ---
+      # --- WICHTIG: Kein RETICULATE_PYTHON setzen. In R-Skripten venv binden. ---
 
-      - name: Debug reticulate config
+      - name: Debug reticulate config (bind venv inside R)
         run: |
-          Rscript -e 'Sys.setenv(RQMOMS_VENV=normalizePath("python/.venv"), RETICULATE_PYTHON=normalizePath("python/.venv/bin/python")); cat(Sys.getenv(c("RQMOMS_BUILD_PY","RQMOMS_VENV","RETICULATE_PYTHON")), sep="\n"); if (requireNamespace("reticulate", quietly=TRUE)) { reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); reticulate::py_discover_config() }'
+          Rscript - <<'RS'
+          Sys.unsetenv("RETICULATE_PYTHON")                  # alte Bindung entfernen
+          venv <- "python/.venv"
+          if (requireNamespace("reticulate", quietly=TRUE)) {
+            reticulate::use_virtualenv(venv, required=TRUE)  # venv binden
+            reticulate::py_discover_config()
+            reticulate::py_run_string("import numpy, qmoms; print('numpy:', numpy.__version__)")
+          } else {
+            message("reticulate not installed?")
+          }
+          RS
 
       - name: Run tests (with Python parity enabled)
         run: |
-          Rscript -e 'Sys.setenv(RETICULATE_PYTHON=normalizePath("python/.venv/bin/python"), RQMOMS_VENV=normalizePath("python/.venv"), RQMOMS_BUILD_PY="1"); devtools::test()'
+          Rscript - <<'RS'
+          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
+          Sys.unsetenv("RETICULATE_PYTHON")
+          reticulate::use_virtualenv("python/.venv", required=TRUE)
+          devtools::test()
+          RS
 
       - name: Build vignettes and pkgdown (with comparison)
         run: |
-          Rscript -e 'Sys.setenv(RETICULATE_PYTHON=normalizePath("python/.venv/bin/python"), RQMOMS_VENV=normalizePath("python/.venv"), RQMOMS_BUILD_PY="1"); devtools::build_vignettes(); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
+          Rscript - <<'RS'
+          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
+          Sys.unsetenv("RETICULATE_PYTHON")
+          reticulate::use_virtualenv("python/.venv", required=TRUE)
+          devtools::build_vignettes()
+          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+          RS
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
