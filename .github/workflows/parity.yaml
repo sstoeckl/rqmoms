@@ -70,21 +70,15 @@ jobs:
       - name: Debug reticulate config (bind venv inside R)
         run: |
           Rscript - <<'RS'
-          Sys.unsetenv("RETICULATE_PYTHON")                  # evtl. geerbte Bindung löschen
-          venv <- "python/.venv"                              # KEIN normalizePath()!
+          Sys.unsetenv("RETICULATE_PYTHON")
+          venv <- "python/.venv"
           if (requireNamespace("reticulate", quietly=TRUE)) {
-            reticulate::use_virtualenv(venv, required=TRUE)  # venv binden
+            reticulate::use_virtualenv(venv, required=TRUE)
             reticulate::py_discover_config()
-            reticulate::py_run_string("
-            import sys, numpy, qmoms
-            print('PY:', sys.executable)
-            print('numpy:', numpy.__version__)
-            print('qmoms: OK')
-            ")
-          } else {
-            stop('reticulate not installed')
-          }
+            reticulate::py_run_string('import sys, numpy, qmoms; print("PY:", sys.executable); print("numpy:", numpy.__version__); print("qmoms: OK")')
+          } else stop("reticulate not installed")
           RS
+
 
       - name: Run tests (with Python parity enabled)
         run: |
