@@ -68,33 +68,47 @@ jobs:
       # --- WICHTIG: Kein RETICULATE_PYTHON setzen. In R-Skripten venv binden. ---
 
       - name: Debug reticulate config (bind venv inside R)
+        env:
+          RETICULATE_PYTHON: ""     # ← hosted Toolcache-Setting hart überschreiben
         run: |
           Rscript - <<'RS'
+          # keine geerbte Toolcache-Bindung
           Sys.unsetenv("RETICULATE_PYTHON")
-          venv <- "python/.venv"
-          if (requireNamespace("reticulate", quietly=TRUE)) {
-            reticulate::use_virtualenv(venv, required=TRUE)
+          venv <- "python/.venv"    # KEIN normalizePath() hier
+
+          if (requireNamespace("reticulate", quietly = TRUE)) {
+            # venv binden, bevor Python initialisiert wird
+            reticulate::use_virtualenv(venv, required = TRUE)
+
+            # anzeigen, welchen Interpreter reticulate nun nimmt
             reticulate::py_discover_config()
+
+            # sanity-check: numpy + qmoms aus venv
             reticulate::py_run_string('import sys, numpy, qmoms; print("PY:", sys.executable); print("numpy:", numpy.__version__); print("qmoms: OK")')
-          } else stop("reticulate not installed")
+          } else {
+            stop("reticulate not installed")
+          }
           RS
 
-
       - name: Run tests (with Python parity enabled)
+        env:
+          RETICULATE_PYTHON: ""     # ← Schritt-Env säubern
         run: |
           Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
+          Sys.setenv(RQMOMS_BUILD_PY = "1", RQMOMS_VENV = "python/.venv")
           Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required=TRUE)
+          reticulate::use_virtualenv("python/.venv", required = TRUE)
           devtools::test()
           RS
 
       - name: Build vignettes and pkgdown (with comparison)
+        env:
+          RETICULATE_PYTHON: ""     # ← Schritt-Env säubern
         run: |
           Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
+          Sys.setenv(RQMOMS_BUILD_PY = "1", RQMOMS_VENV = "python/.venv")
           Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required=TRUE)
+          reticulate::use_virtualenv("python/.venv", required = TRUE)
           devtools::build_vignettes()
           pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
           RS
