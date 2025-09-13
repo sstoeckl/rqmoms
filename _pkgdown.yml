@@ -1,14 +1,11 @@
-url: https://www.sebastianstoeckl.com/rqmoms/
+url: https://sstoeckl.github.io/rqmoms
 template:
   bootstrap: 5
-  bootswatch: spacelab
 
-navbar:
-  bg: primary
-
+# Articles config: tell pkgdown to copy our pre-rendered article "as is"
 articles:
-  - title: Parity
-    contents:
-      - file: vignettes/python-parity.html   # path to the pre-rendered HTML
-        as_is: true                          # copy as-is, no re-knit
-        name: Python–R parity                # title shown in the site
+  as_is:
+    - python-parity        # <- slug (basename of the Rmd without extension)
+  contents:
+    - python-parity        # <- must be a STRING slug, not a map
+
