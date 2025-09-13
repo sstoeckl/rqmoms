@@ -15,48 +15,31 @@ knitr::opts_chunk$set(
 ```
 
 ```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-# run with Python only when explicitly enabled
-has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1") &&
+has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY","0"), "1") &&
           requireNamespace("reticulate", quietly = TRUE)
-
 why <- NULL
 if (has_py) {
   ok <- FALSE
   try({
     rp <- Sys.getenv("RETICULATE_PYTHON")
     if (nzchar(rp)) {
-      # CI: bind to toolcache python prepared by setup-python
       reticulate::use_python(rp, required = TRUE)
     } else {
-      # Local: optional virtualenv
-      venv <- Sys.getenv("RQMOMS_VENV", file.path("python", ".venv"))
+      venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
       if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
       reticulate::use_virtualenv(venv, required = TRUE)
     }
-    # sanity: both must import
     reticulate::py_run_string("import numpy, qmoms")
     ok <- TRUE
   }, silent = TRUE)
-  if (!ok) {
-    has_py <- FALSE
-    why <- "Could not import numpy/qmoms in the configured Python."
-  }
+  if (!ok) { has_py <- FALSE; why <- "Could not import numpy/qmoms." }
 } else {
-  if (!requireNamespace("reticulate", quietly = TRUE))
-    why <- "R package 'reticulate' is not installed."
-  else
-    why <- "RQMOMS_BUILD_PY != 1."
+  why <- "RQMOMS_BUILD_PY != 1 or reticulate not installed."
 }
-
-if (!has_py) {
-  cat('<div class="alert alert-warning" role="alert">',
-      '<strong>Python parity is disabled.</strong> ',
-      'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
-      '<code>RETICULATE_PYTHON</code> (toolcache/system Python with qmoms installed) ',
-      'or <code>RQMOMS_VENV</code> (a virtualenv). ',
-      if (!is.null(why)) paste0('(', why, ')'),
-      '</div>')
-}
+if (!has_py) cat('<div class="alert alert-warning" role="alert"><b>Python parity is disabled.</b> ',
+                 'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
+                 '<code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>. ',
+                 if (!is.null(why)) paste0('(', why, ')'), '</div>')
 ```
 
 ## Goal

@@ -1,39 +1,49 @@
 name: pkgdown
 
 on:
-  release: { types: [published] }
+  release:
+    types: [published]
   workflow_dispatch: {}
 
-permissions: { contents: write }
+permissions:
+  contents: write
 
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
     env:
-      RQMOMS_BUILD_PY: "1"   # tell the vignette to try Python
+      # tell the vignette to actually run Python chunks
+      RQMOMS_BUILD_PY: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - uses: r-lib/actions/setup-r@v2
+      - name: Set up R (RSPM)
+        uses: r-lib/actions/setup-r@v2
         with: { use-public-rspm: true }
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Install R deps (pkgdown + reticulate)
+        uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
-            any::pkgdown
-            any::reticulate
             any::devtools
+            any::pkgdown
             any::rmarkdown
+            any::reticulate
           needs: website
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
-      - name: Install numpy + qmoms (toolcache python)
+      - name: Install numpy + qmoms into this Python
+        shell: bash
         run: |
+          set -euxo pipefail
           python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@main"
@@ -44,6 +54,7 @@ jobs:
           print("qmoms import: OK")
           PY
 
+      # Important: run clean R sessions and pin reticulate to the toolcache python
       - name: Build vignettes and site with Python enabled
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
@@ -53,7 +64,8 @@ jobs:
           Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::build_vignettes()'
           Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
 
-      - uses: JamesIves/github-pages-deploy-action@v4
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
