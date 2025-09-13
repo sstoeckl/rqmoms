@@ -69,6 +69,11 @@
 
     
     
+<div class="alert alert-warning" role="alert">
+<b>Python parity is disabled.</b> Set <code>RQMOMS_BUILD_PY=1</code> and
+either <code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>.
+(Could not import numpy/qmoms.)
+</div>
 <div class="section level2">
 <h2 id="goal">Goal<a class="anchor" aria-label="anchor" href="#goal"></a>
 </h2>
@@ -76,20 +81,9 @@
 the pure-R implementation in <code>rqmoms</code> and the original Python
 package <strong><code>vilkovgr/qmoms</code></strong> for the same inputs
 and parameters.</p>
-<p>It is safe to knit on CI/CRAN (Python parts are skipped by default).
-To <strong>enable</strong> the Python comparison locally:</p>
-<ol style="list-style-type: decimal">
-<li>Create a virtualenv at <code>python/.venv</code> and install the
-Python repo (editable) into it, or set <code>RQMOMS_VENV</code> to your
-venv path.</li>
-<li>Set <code>RQMOMS_BUILD_PY=1</code> in your session (or
-<code>.Renviron</code>).</li>
-</ol>
-</div>
-<div class="section level2">
-<h2 id="for-a-proper-setup-of-python-for-testing-refer-to-this-script-dev01-setup-python-r">For a proper setup of python for testing refer to this script:
-“dev/01-setup-python.R”<a class="anchor" aria-label="anchor" href="#for-a-proper-setup-of-python-for-testing-refer-to-this-script-dev01-setup-python-r"></a>
-</h2>
+<p>For a proper setup of python for testing refer to this script:
+“dev/01-setup-python.R”</p>
+<hr>
 </div>
 <div class="section level2">
 <h2 id="libraries-packaged-data">Libraries &amp; packaged data<a class="anchor" aria-label="anchor" href="#libraries-packaged-data"></a>
@@ -125,40 +119,9 @@ venv path.</li>
 <span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m4 [<span class="dv">39</span>m <span class="dv">1996-01-02</span>    <span class="dv">78</span>  <span class="fl">5.61</span></span>
 <span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m5 [<span class="dv">39</span>m <span class="dv">1996-01-02</span>   <span class="dv">169</span>  <span class="fl">5.47</span></span>
 <span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m6 [<span class="dv">39</span>m <span class="dv">1996-01-02</span>   <span class="dv">260</span>  <span class="fl">5.35</span></span></code></pre></div>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="detect-optional-python-reference">Detect (optional) Python reference<a class="anchor" aria-label="anchor" href="#detect-optional-python-reference"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>has_py <span class="ot">&lt;-</span> <span class="fu">identical</span>(<span class="fu">Sys.getenv</span>(<span class="st">"RQMOMS_BUILD_PY"</span>, <span class="st">"0"</span>), <span class="st">"1"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="cf">if</span> (has_py) {</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  venv <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"RQMOMS_VENV"</span>, <span class="fu">file.path</span>(<span class="st">"python"</span>, <span class="st">".venv"</span>))</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="fu">try</span>({</span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    reticulate<span class="sc">::</span><span class="fu">use_virtualenv</span>(venv, <span class="at">required =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    reticulate<span class="sc">::</span><span class="fu">py_run_string</span>(<span class="st">"import numpy as np</span><span class="sc">\n</span><span class="st">if not hasattr(np,'NAN'): np.NAN = np.nan"</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    <span class="co"># Prefer submodule path if present</span></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    srcs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">file.path</span>(<span class="st">"python"</span>,<span class="st">"qmoms_src"</span>), <span class="fu">file.path</span>(<span class="st">"python"</span>,<span class="st">"qmoms"</span>))</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>    srcs <span class="ot">&lt;-</span> srcs[<span class="fu">dir.exists</span>(srcs)]</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(srcs)) {</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>      reticulate<span class="sc">::</span><span class="fu">py_run_string</span>(<span class="fu">sprintf</span>(</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>        <span class="st">"import sys; sys.path.insert(0, r'%s')"</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>        <span class="fu">normalizePath</span>(srcs[[<span class="dv">1</span>]], <span class="at">winslash =</span> <span class="st">"/"</span>, <span class="at">mustWork =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>      ))</span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    }</span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>    reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"qmoms"</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>    ok <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  }, <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  has_py <span class="ot">&lt;-</span> ok</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>}</span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>has_py) {</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"**Python parity is disabled.** Set `RQMOMS_BUILD_PY=1` and point `RQMOMS_VENV` to a valid virtualenv to run the comparison.</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>}</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="sc">&gt;</span> <span class="er">**</span>Python parity is disabled.<span class="sc">**</span> Set <span class="st">`</span><span class="at">RQMOMS_BUILD_PY=1</span><span class="st">`</span> and point <span class="st">`</span><span class="at">RQMOMS_VENV</span><span class="st">`</span> to a valid virtualenv to run the comparison.</span></code></pre></div>
 <p>For convenience we define a small wrapper (only used when
 <code>has_py = TRUE</code>):</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">py_compute</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mnes</span>, <span class="va">vol</span>, <span class="va">days</span>, <span class="va">rate</span>, <span class="va">params</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"qmoms"</span><span class="op">)</span></span>
 <span>  <span class="va">out</span> <span class="op">&lt;-</span> <span class="va">m</span><span class="op">$</span><span class="fu">qmoms_compute</span><span class="op">(</span></span>
@@ -177,33 +140,33 @@ venv path.</li>
 <div class="section level2">
 <h2 id="single-surface-side-by-side">Single surface: side-by-side<a class="anchor" aria-label="anchor" href="#single-surface-side-by-side"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">rq_default_params</span>()</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>one <span class="ot">&lt;-</span> <span class="fu">subset</span>(qmoms_surface,</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>              id <span class="sc">==</span> qmoms_surface<span class="sc">$</span>id[<span class="dv">1</span>] <span class="sc">&amp;</span> days <span class="sc">==</span> qmoms_surface<span class="sc">$</span>days[<span class="dv">1</span>])</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>r30 <span class="ot">&lt;-</span> <span class="fu">get_rate_for_maturity</span>(qmoms_zerocd, <span class="at">date =</span> one<span class="sc">$</span>date[<span class="dv">1</span>], <span class="at">days =</span> one<span class="sc">$</span>days[<span class="dv">1</span>])</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>r_out <span class="ot">&lt;-</span> <span class="fu">qmoms_compute</span>(one<span class="sc">$</span>mnes, one<span class="sc">$</span>impl_volatility, one<span class="sc">$</span>days[<span class="dv">1</span>], r30,</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>                       <span class="at">params =</span> params, <span class="at">output =</span> <span class="st">"list"</span>)</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">str</span>(r_out)</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="sc">&gt;</span> List of <span class="dv">17</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> nopt       <span class="sc">:</span> int <span class="dv">234</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> smfiv      <span class="sc">:</span> num <span class="fl">6.39</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfiv_bkm   <span class="sc">:</span> num <span class="fl">3.1</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfiv_bjn   <span class="sc">:</span> num <span class="fl">3.92</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> smfivd     <span class="sc">:</span> num <span class="fl">0.0076</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfivd_bkm  <span class="sc">:</span> num <span class="fl">0.0115</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfivd_bjn  <span class="sc">:</span> num <span class="fl">0.01</span></span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfis       <span class="sc">:</span> num <span class="sc">-</span><span class="fl">0.0476</span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfik       <span class="sc">:</span> num <span class="fl">3.28</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> cvix_sigma2<span class="sc">:</span> num <span class="fl">1.94</span></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> cvix_mnes20<span class="sc">:</span> num <span class="fl">1.2</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> rix        <span class="sc">:</span> num <span class="fl">0.00151</span></span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> rixnorm    <span class="sc">:</span> num <span class="fl">0.131</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> tlm_sigma2 <span class="sc">:</span> num <span class="cn">NA</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> tlm_delta20<span class="sc">:</span> num <span class="cn">NA</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> slopedn    <span class="sc">:</span> num <span class="cn">NA</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> slopeup    <span class="sc">:</span> num <span class="sc">-</span><span class="fl">3.46e-16</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">rq_default_params</span>()</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>one <span class="ot">&lt;-</span> <span class="fu">subset</span>(qmoms_surface,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>              id <span class="sc">==</span> qmoms_surface<span class="sc">$</span>id[<span class="dv">1</span>] <span class="sc">&amp;</span> days <span class="sc">==</span> qmoms_surface<span class="sc">$</span>days[<span class="dv">1</span>])</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>r30 <span class="ot">&lt;-</span> <span class="fu">get_rate_for_maturity</span>(qmoms_zerocd, <span class="at">date =</span> one<span class="sc">$</span>date[<span class="dv">1</span>], <span class="at">days =</span> one<span class="sc">$</span>days[<span class="dv">1</span>])</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>r_out <span class="ot">&lt;-</span> <span class="fu">qmoms_compute</span>(one<span class="sc">$</span>mnes, one<span class="sc">$</span>impl_volatility, one<span class="sc">$</span>days[<span class="dv">1</span>], r30,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>                       <span class="at">params =</span> params, <span class="at">output =</span> <span class="st">"list"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">str</span>(r_out)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="sc">&gt;</span> List of <span class="dv">17</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> nopt       <span class="sc">:</span> int <span class="dv">234</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> smfiv      <span class="sc">:</span> num <span class="fl">6.39</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfiv_bkm   <span class="sc">:</span> num <span class="fl">3.1</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfiv_bjn   <span class="sc">:</span> num <span class="fl">3.92</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> smfivd     <span class="sc">:</span> num <span class="fl">0.0076</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfivd_bkm  <span class="sc">:</span> num <span class="fl">0.0115</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfivd_bjn  <span class="sc">:</span> num <span class="fl">0.01</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfis       <span class="sc">:</span> num <span class="sc">-</span><span class="fl">0.0476</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> mfik       <span class="sc">:</span> num <span class="fl">3.28</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> cvix_sigma2<span class="sc">:</span> num <span class="fl">1.94</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> cvix_mnes20<span class="sc">:</span> num <span class="fl">1.2</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> rix        <span class="sc">:</span> num <span class="fl">0.00151</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> rixnorm    <span class="sc">:</span> num <span class="fl">0.131</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> tlm_sigma2 <span class="sc">:</span> num <span class="cn">NA</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> tlm_delta20<span class="sc">:</span> num <span class="cn">NA</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> slopedn    <span class="sc">:</span> num <span class="cn">NA</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="er">$</span> slopeup    <span class="sc">:</span> num <span class="sc">-</span><span class="fl">3.46e-16</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">py_out</span> <span class="op">&lt;-</span> <span class="fu">py_compute</span><span class="op">(</span><span class="va">one</span><span class="op">$</span><span class="va">mnes</span>, <span class="va">one</span><span class="op">$</span><span class="va">impl_volatility</span>, <span class="va">one</span><span class="op">$</span><span class="va">days</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">r30</span>, <span class="va">params</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">keys</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r_out</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">py_out</span><span class="op">)</span><span class="op">)</span></span>
@@ -222,11 +185,11 @@ venv path.</li>
 </h2>
 <p>We merge the zero curve into the surface and run both engines for
 every <code>(id, date, days)</code> group.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>surf_r <span class="ot">&lt;-</span> <span class="fu">get_rate_for_maturity</span>(qmoms_zerocd, <span class="at">df_surf =</span> qmoms_surface)</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>groups <span class="ot">&lt;-</span> <span class="fu">split</span>(surf_r, <span class="fu">list</span>(surf_r<span class="sc">$</span>id, surf_r<span class="sc">$</span>date, surf_r<span class="sc">$</span>days), <span class="at">drop =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">length</span>(groups)</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">9</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>surf_r <span class="ot">&lt;-</span> <span class="fu">get_rate_for_maturity</span>(qmoms_zerocd, <span class="at">df_surf =</span> qmoms_surface)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>groups <span class="ot">&lt;-</span> <span class="fu">split</span>(surf_r, <span class="fu">list</span>(surf_r<span class="sc">$</span>id, surf_r<span class="sc">$</span>date, surf_r<span class="sc">$</span>days), <span class="at">drop =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">length</span>(groups)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">9</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">key_metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smfiv"</span>,<span class="st">"mfiv_bkm"</span>,<span class="st">"mfiv_bjn"</span>,</span>
 <span>                 <span class="st">"smfivd"</span>,<span class="st">"mfivd_bkm"</span>,<span class="st">"mfivd_bjn"</span>,</span>
 <span>                 <span class="st">"mfis"</span>,<span class="st">"mfik"</span>,<span class="st">"rix"</span>,<span class="st">"rixnorm"</span>,<span class="st">"slopedn"</span>,<span class="st">"slopeup"</span><span class="op">)</span></span>
@@ -263,7 +226,7 @@ every <code>(id, date, days)</code> group.</p>
 <div class="section level3">
 <h3 id="visual-check-example-metric">Visual check (example metric)<a class="anchor" aria-label="anchor" href="#visual-check-example-metric"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="st">"mfiv_bkm"</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">all_cmp</span><span class="op">$</span><span class="va">abs_diff</span><span class="op">[</span><span class="va">all_cmp</span><span class="op">$</span><span class="va">metric</span> <span class="op">==</span> <span class="va">m</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">x</span>, breaks <span class="op">=</span> <span class="fl">30</span>, main <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Absolute differences: %s"</span>, <span class="va">m</span><span class="op">)</span>, xlab <span class="op">=</span> <span class="st">"abs diff"</span><span class="op">)</span></span></code></pre></div>
