@@ -55,14 +55,24 @@ jobs:
           PY
 
       # Important: run clean R sessions and pin reticulate to the toolcache python
-      - name: Build vignettes and site with Python enabled
+      - name: Build site with Python enabled (no devtools::build_vignettes)
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
           R_ENVIRON_USER: /dev/null
           R_PROFILE_USER: /dev/null
+          RQMOMS_BUILD_PY: "1"
         run: |
-          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::build_vignettes()'
-          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
+          Rscript --vanilla - <<'RS'
+          stopifnot(requireNamespace("reticulate", quietly=TRUE))
+          # Bind to the toolcache Python we just pip-installed into
+          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
+
+          # (optional) log what we're bound to, useful if something goes wrong
+          reticulate::py_discover_config()
+
+          # Build the site in THIS session so the vignette sees the bound Python
+          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+          RS
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
