@@ -23,7 +23,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Fastest way to get reticulate with repos configured
+      # Fast and reliable way to get reticulate with repos configured
       - name: Install reticulate
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -54,7 +54,7 @@ jobs:
           PY
 
       - name: Probe reticulate ↔ venv binding (R)
-        # Ensure we don't inherit a toolcache pin
+        # Ensure we don't inherit a toolcache interpreter pin
         env:
           RETICULATE_PYTHON: ""
         run: |
@@ -63,7 +63,7 @@ jobs:
           Sys.unsetenv("RETICULATE_PYTHON")
           venv <- "python/.venv"
 
-          # 2) Bind venv BEFORE any reticulate init
+          # 2) Bind venv BEFORE any reticulate init (no use_python, no normalizePath)
           stopifnot(requireNamespace("reticulate", quietly = TRUE))
           reticulate::use_virtualenv(venv, required = TRUE)
 
@@ -71,7 +71,7 @@ jobs:
           reticulate::py_discover_config()
 
           # 4) Verify imports truly come from the venv
-          reticulate::py_run_string('import sys, numpy, qmoms; print("R sees Python:", sys.executable); print("R sees NumPy:", numpy.__version__)')
+          reticulate::py_run_string('import sys, site, numpy, qmoms; print("R sees Python:", sys.executable); print("site:", site.getsitepackages()); print("R sees NumPy:", numpy.__version__); print("qmoms: OK")')
 
           # 5) Hard assertions so the job fails if not venv
           py <- reticulate::py_eval("sys.executable")
