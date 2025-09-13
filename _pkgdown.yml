@@ -3,6 +3,7 @@ template:
   bootstrap: 5
 
 articles:
-- title: Parity
+- title: Parity with Python
+  navbar: ~
   contents:
   - python-parity
