@@ -55,7 +55,7 @@ jobs:
           PY
 
       # Important: run clean R sessions and pin reticulate to the toolcache python
-      - name: Build site with Python enabled (no devtools::build_vignettes)
+      - name: Build parity article (pre-render) and site
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
           R_ENVIRON_USER: /dev/null
@@ -64,15 +64,24 @@ jobs:
         run: |
           Rscript --vanilla - <<'RS'
           stopifnot(requireNamespace("reticulate", quietly=TRUE))
-          # Bind to the toolcache Python we just pip-installed into
           reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
 
-          # (optional) log what we're bound to, useful if something goes wrong
-          reticulate::py_discover_config()
+          # 1) Pre-render the vignette to HTML in this (Python-bound) session
+          rmarkdown::render(
+            "vignettes/python-parity.Rmd",
+            output_dir = "vignettes",
+            clean      = TRUE,
+            envir      = new.env()
+          )
 
-          # Build the site in THIS session so the vignette sees the bound Python
-          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+          # 2) Build site using the pre-rendered HTML (no re-knit)
+          pkgdown::build_articles(as_is = TRUE, new_process = FALSE)
+          pkgdown::build_reference()
+          pkgdown::build_home()
+          pkgdown::build_news()
+          pkgdown::build_search_index()
           RS
+
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
