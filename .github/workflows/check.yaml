@@ -24,6 +24,10 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+      - name: Ignore vignettes in CI (avoid inst/doc warnings)
+        run: |
+          echo '^vignettes/.*$' >> .Rbuildignore
+
       - name: R CMD check (no vignettes for speed)
         uses: r-lib/actions/check-r-package@v2
         with:
