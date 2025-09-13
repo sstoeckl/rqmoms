@@ -8,7 +8,7 @@ on:
         required: false
         default: "main"
   schedule:
-    - cron: "0 3 * * 1"  # optional weekly run
+    - cron: "0 3 * * 1"  # optional: weekly run
 
 permissions:
   contents: write
@@ -16,20 +16,21 @@ permissions:
 jobs:
   parity:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       # enable Python comparison in tests/vignette
       RQMOMS_BUILD_PY: "1"
-      RQMOMS_VENV: ${{ github.workspace }}/python/.venv
+      # which qmoms ref to install from GitHub
       QMOMS_REF: ${{ github.event.inputs.qmoms_ref || 'main' }}
 
     steps:
-      - name: Checkout rqmoms
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up R
+      - name: Set up R (RSPM)
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
@@ -44,70 +45,61 @@ jobs:
             any::reticulate
           needs: website
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.11 (toolcache)
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
+          cache: pip
 
-      - name: Create venv and install Python deps + vilkovgr/qmoms
+      - name: Install numpy + qmoms into toolcache Python
         shell: bash
         run: |
           set -euxo pipefail
-          python -m venv python/.venv
-          source python/.venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel build setuptools-scm
+          python -V
+          python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@${QMOMS_REF}"
-          # Sanity check: venv interpreter + imports
           python - <<'PY'
-          import sys, numpy
-          print("VENV python:", sys.executable)
-          print("numpy:", numpy.__version__)
-          import qmoms
+          import sys, numpy, qmoms
+          print("PY:", sys.executable)
+          print("NumPy:", numpy.__version__)
           print("qmoms import: OK")
           PY
 
-      # IMPORTANT: don't set RETICULATE_PYTHON. Bind venv *inside* R before init.
+      # ===== R steps: bind reticulate to the SAME toolcache interpreter =====
+      # We run clean R sessions (--vanilla) and neutralize user startup files.
 
-      - name: Debug reticulate config (bind venv inside R)
+      - name: Debug reticulate config (should see toolcache Python)
         env:
-          RETICULATE_PYTHON: ""     # clear any hosted-toolcache override
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
+          R_ENVIRON_USER: /dev/null
+          R_PROFILE_USER: /dev/null
         run: |
-          Rscript - <<'RS'
-          Sys.unsetenv("RETICULATE_PYTHON")
-          venv <- "python/.venv"
-          if (requireNamespace("reticulate", quietly=TRUE)) {
-            reticulate::use_virtualenv(venv, required=TRUE)
-            reticulate::py_discover_config()
-            reticulate::py_run_string('import sys, numpy, qmoms; print("PY:", sys.executable); print("numpy:", numpy.__version__); print("qmoms: OK")')
-          } else {
-            stop("reticulate not installed")
-          }
+          Rscript --vanilla - <<'RS'
+          stopifnot(requireNamespace("reticulate", quietly=TRUE))
+          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
+          reticulate::py_discover_config()
+          reticulate::py_run_string('import sys, numpy, qmoms; print("R sees:", sys.executable); print("NumPy:", numpy.__version__); print("qmoms: OK")')
           RS
 
-      - name: Run tests (with Python parity enabled)
+      - name: Run tests (with Python parity)
         env:
-          RETICULATE_PYTHON: ""     # ensure a clean R session env
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
+          R_ENVIRON_USER: /dev/null
+          R_PROFILE_USER: /dev/null
+          RQMOMS_BUILD_PY: "1"
         run: |
-          Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
-          Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required=TRUE)
-          devtools::test()
-          RS
+          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::test()'
 
-      - name: Build vignettes and pkgdown (with comparison)
+      - name: Build vignettes + pkgdown (with comparison)
         env:
-          RETICULATE_PYTHON: ""     # ensure a clean R session env
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
+          R_ENVIRON_USER: /dev/null
+          R_PROFILE_USER: /dev/null
+          RQMOMS_BUILD_PY: "1"
         run: |
-          Rscript - <<'RS'
-          Sys.setenv(RQMOMS_BUILD_PY="1", RQMOMS_VENV="python/.venv")
-          Sys.unsetenv("RETICULATE_PYTHON")
-          reticulate::use_virtualenv("python/.venv", required=TRUE)
-          devtools::build_vignettes()
-          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
-          RS
+          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::build_vignettes()'
+          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
