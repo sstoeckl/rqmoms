@@ -99,7 +99,6 @@ jobs:
           RQMOMS_BUILD_PY: "1"
         run: |
           Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::build_vignettes()'
-          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
