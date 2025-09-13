@@ -43,11 +43,11 @@ jobs:
           python -m pip install "git+https://github.com/vilkovgr/qmoms@main"
           # quick sanity (shell-side)
           python - <<'PY'
-import sys, numpy, qmoms
-print("VENV Python:", sys.executable)
-print("numpy:", numpy.__version__)
-print("qmoms import: OK")
-PY
+          import sys, numpy, qmoms
+          print("VENV Python:", sys.executable)
+          print("numpy:", numpy.__version__)
+          print("qmoms import: OK")
+          PY
 
       - name: Probe reticulate ↔ venv binding (R)
         # Important: start R with a clean env for RETICULATE_PYTHON
