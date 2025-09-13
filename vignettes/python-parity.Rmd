@@ -15,7 +15,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY","0"), "1") &&
           requireNamespace("reticulate", quietly=TRUE)
 why <- NULL
