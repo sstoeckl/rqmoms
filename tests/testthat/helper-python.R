@@ -1,37 +1,32 @@
-Sys.unsetenv("RETICULATE_PYTHON")               # falls CI irgendwas gesetzt hat
-venv <- Sys.getenv("RQMOMS_VENV", "python/.venv")
+# tests/testthat/helper-python.R
+# Robust Python detection for CI (toolcache) and local (venv).
+
 has_py <- FALSE
-if (requireNamespace("reticulate", quietly = TRUE)) {
-  try({
-    reticulate::use_virtualenv(venv, required = TRUE)
-    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
-    reticulate::import("qmoms")
-    has_py <- TRUE
-  }, silent = TRUE)
-}
-options(rqmoms.has_py = has_py)
-# ... (rest wie bei dir)
 
 if (requireNamespace("reticulate", quietly = TRUE)) {
+  # 1) Prefer a pre-selected interpreter (CI sets RETICULATE_PYTHON)
+  rp <- Sys.getenv("RETICULATE_PYTHON")
+
+  # 2) Otherwise allow a project venv path
+  venv <- Sys.getenv("RQMOMS_VENV", "python/.venv")
+
   try({
-    reticulate::use_virtualenv(venv, required = TRUE)
-
-    # numpy 2.x shim
-    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
-
-    # Prefer local src if present (not required in CI parity workflow)
-    srcs <- c(file.path(pkg_root, "python", "qmoms_src"),
-              file.path(pkg_root, "python", "qmoms"))
-    srcs <- srcs[dir.exists(srcs)]
-    if (length(srcs)) {
-      reticulate::py_run_string(sprintf(
-        "import sys; sys.path.insert(0, r'%s')",
-        normalizePath(srcs[[1]], winslash="/", mustWork=TRUE)
-      ))
+    if (nzchar(rp)) {
+      # Bind to the exact interpreter our workflow installed into
+      reticulate::use_python(rp, required = TRUE)
+    } else if (nzchar(venv)) {
+      # Local dev: use the project venv if it exists
+      reticulate::use_virtualenv(venv, required = TRUE)
     }
+    # Initialize and verify
+    has_py <- reticulate::py_available(initialize = TRUE)
 
-    reticulate::import("qmoms")
-    has_py <- TRUE
+    if (has_py) {
+      # numpy 2.x shim for legacy code expecting np.NAN
+      reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
+      # ensure qmoms import works
+      reticulate::import("qmoms")
+    }
   }, silent = TRUE)
 }
 
@@ -39,14 +34,15 @@ options(rqmoms.has_py = has_py)
 
 rq_has_python <- function() isTRUE(getOption("rqmoms.has_py", FALSE))
 
+# small helper to call Python reference (used in tests)
 rq_pyref_compute <- function(mnes, vol, days, rate, params) {
   stopifnot(rq_has_python())
   m <- reticulate::import("qmoms")
   out <- m$qmoms_compute(
-    mnes = as.numeric(mnes),
-    vol  = as.numeric(vol),
-    days = as.integer(days),
-    rate = as.numeric(rate),
+    mnes   = as.numeric(mnes),
+    vol    = as.numeric(vol),
+    days   = as.integer(days),
+    rate   = as.numeric(rate),
     params = reticulate::r_to_py(params, convert = TRUE),
     output = "pandas"
   )
