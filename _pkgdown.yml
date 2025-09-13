@@ -5,4 +5,4 @@ template:
 articles:
   - title: Parity
     contents:
-      - "vignettes/python-parity.html"
+      - vignettes/python-parity.html
