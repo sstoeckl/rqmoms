@@ -1,11 +1,7 @@
-name: reticulate-venv-probe
+name: reticulate-probe
 
 on:
   workflow_dispatch: {}
-
-concurrency:
-  group: reticulate-venv-probe
-  cancel-in-progress: true
 
 jobs:
   probe:
@@ -15,67 +11,49 @@ jobs:
     steps:
       - name: Checkout (shallow)
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+        with: { fetch-depth: 1 }
 
-      - name: Set up R
+      - name: Set up R (RSPM)
         uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
+        with: { use-public-rspm: true }
 
-      # Fast and reliable way to get reticulate with repos configured
       - name: Install reticulate
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::reticulate
           needs: check
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.11 (toolcache)
+        id: py
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
-      - name: Create venv + install numpy & qmoms (GitHub)
+      - name: Install numpy + qmoms into toolcache Python
         shell: bash
         run: |
           set -euxo pipefail
-          python -m venv python/.venv
-          source python/.venv/bin/activate
+          python -V
           python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy tqdm
           python -m pip install "git+https://github.com/vilkovgr/qmoms@main"
-          # quick sanity (shell-side)
           python - <<'PY'
           import sys, numpy, qmoms
-          print("VENV Python:", sys.executable)
-          print("numpy:", numpy.__version__)
+          print("PY:", sys.executable)
+          print("NumPy:", numpy.__version__)
           print("qmoms import: OK")
           PY
 
-      - name: Probe reticulate ↔ venv binding (R)
-        # Ensure we don't inherit a toolcache interpreter pin
+      - name: Probe reticulate binding to toolcache Python
         env:
-          RETICULATE_PYTHON: ""
+          # setup-python exposes this path for the chosen interpreter
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
           Rscript - <<'RS'
-          # 1) Never inherit a host/toolcache pin
-          Sys.unsetenv("RETICULATE_PYTHON")
-          venv <- "python/.venv"
-
-          # 2) Bind venv BEFORE any reticulate init (no use_python, no normalizePath)
-          stopifnot(requireNamespace("reticulate", quietly = TRUE))
-          reticulate::use_virtualenv(venv, required = TRUE)
-
-          # 3) Show what we bound to
+          # bind to the exact toolcache interpreter (already has numpy + qmoms)
+          stopifnot(requireNamespace("reticulate", quietly=TRUE))
+          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
           reticulate::py_discover_config()
-
-          # 4) Verify imports truly come from the venv
-          reticulate::py_run_string('import sys, site, numpy, qmoms; print("R sees Python:", sys.executable); print("site:", site.getsitepackages()); print("R sees NumPy:", numpy.__version__); print("qmoms: OK")')
-
-          # 5) Hard assertions so the job fails if not venv
-          py <- reticulate::py_eval("sys.executable")
-          if (!grepl("/python/.venv/", py, fixed = TRUE)) {
-            stop("Not using venv interpreter: ", py)
-          }
+          reticulate::py_run_string('import sys, numpy, qmoms; print("R sees:", sys.executable); print("NumPy:", numpy.__version__); print("qmoms: OK")')
           RS
