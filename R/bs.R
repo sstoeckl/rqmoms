@@ -7,7 +7,6 @@ BlackScholes <- function(S0, K, r, sigma, T) {
   list(c = c, p = p)
 }
 
-
 #' @keywords internal
 Black <- function(F, K, r, sigma, T) {
   d1 <- (log(F / K) + (sigma^2)/2 * T) / (sigma * sqrt(T))
@@ -17,7 +16,6 @@ Black <- function(F, K, r, sigma, T) {
   list(c = c, p = p)
 }
 
-
 #' @keywords internal
 BlackScholes_delta <- function(S0, K, r, sigma, T) {
   d1 <- (log(S0 / K) + (r + (sigma^2)/2) * T) / (sigma * sqrt(T))
@@ -25,7 +23,6 @@ BlackScholes_delta <- function(S0, K, r, sigma, T) {
   delta_p <- delta_c - 1
   list(delta_c = delta_c, delta_p = delta_p)
 }
-
 
 #' @keywords internal
 Black_delta <- function(F, K, r, sigma, T) {

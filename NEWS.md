@@ -1,3 +1,4 @@
-# rqmoms (development version)
+# rqmoms 0.9.0.0
 
-* Initial CRAN submission.
+- Initial public release.
+- R implementation of qmoms with parity checks against `vilkovgr/qmoms`.

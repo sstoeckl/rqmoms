@@ -86,7 +86,6 @@ tlm_func <- function(currputs, kiputs, currputd, tlm_params, iv, mat) {
   out
 }
 
-
 #' @keywords internal
 f_tlm <- function(X, P0, K0, Pt, K) {
   xi <- X[1]; beta <- X[2]

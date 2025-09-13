@@ -7,6 +7,7 @@ rq_grid_params <- function(params) {
   c(m, k)
 }
 
+#' @keywords internal
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 #' PCHIP-Interpolation + Clamping (Python-kompatibel)
@@ -57,5 +58,3 @@ rq_grid_params <- function(params) {
   c(m, k)
 }
 
-
-`%||%` <- function(a, b) if (is.null(a)) b else a

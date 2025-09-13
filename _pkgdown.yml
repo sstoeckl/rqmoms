@@ -1,4 +1,4 @@
-url: https://sstoeckl.github.io/rqmoms/
+url: https://www.sebastianstoeckl.com/rqmoms/
 template:
   bootstrap: 5
   bootswatch: spacelab
@@ -13,7 +13,7 @@ navbar:
     github:
       icon: fa-github
       aria-label: "GitHub"
-      href: https://github.com/<YOUR_GH_USERNAME>/rqmoms
+      href: https://github.com/sstoeckl/rqmoms
 home:
   title: rqmoms
   description: Pure R re-implementation of option-implied moments (Python 'qmoms').

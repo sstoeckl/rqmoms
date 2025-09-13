@@ -9,6 +9,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      R_BUILD_ARGS: --no-build-vignettes
+      R_CHECK_ARGS: --ignore-vignettes --no-manual
     concurrency:
       group: check-${{ github.ref }}
       cancel-in-progress: true

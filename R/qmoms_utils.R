@@ -20,7 +20,6 @@ applySerial <- function(dfGrouped, func_main, params) {
   vctrs::vec_rbind(!!!out)
 }
 
-
 #' Filter option rows by moneyness, delta windows and quality flags
 #'
 #' Mirrors the Python helper: removes in-the-money quotes and rows
@@ -70,6 +69,9 @@ filter_options <- function(optdata, filter) {
 #'
 #' # merge into a surface
 #' head(get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface))
+#'
+#' @importFrom utils tail
+#'
 #' @export
 get_rate_for_maturity <- function(df_rate, df_surf = NULL, date = NULL, days = NULL) {
   if (is.null(df_surf) && (is.null(date) || is.null(days))) {

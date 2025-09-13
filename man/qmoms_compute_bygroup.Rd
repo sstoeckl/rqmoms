@@ -15,26 +15,28 @@ qmoms_compute_bygroup(
 )
 }
 \arguments{
-\item{groupparams}{A list of the group to be treated as well as the parameters as returned by \code{\link[=rq_default_params]{rq_default_params()}}.}
+\item{groupparams}{A two-element list: \code{list(group_df, params)} where
+\code{group_df} is a data.frame/tibble containing a \emph{single} surface (same \code{id}/\code{date}/\code{days});
+\code{params} is the list returned by \code{\link[=rq_default_params]{rq_default_params()}}.
+\code{group_df} must include columns for moneyness and IV (defaults: \code{mnes}, \code{impl_volatility});
+optionally \code{rate} if you do not pass \code{rate} explicitly.}
 
 \item{id, date, days, rate}{Optional scalar overrides for the group keys and rate.
-If \code{rate} is \code{NULL}, the function will look for a \code{rate} column in \code{x}.}
+If \code{rate} is \code{NULL}, the function looks for a \code{rate} column in \code{group_df}.}
 
-\item{cols_map}{Optional named list mapping required columns in \code{x} to the
-expected names, e.g. \code{list(id="ID", date="Date", days="Days", rate="Rate", mnes="M", impl_volatility="IV")}.}
-
-\item{x}{A data.frame/tibble containing a \emph{single} surface. Must include
-columns for moneyness and IV (default: \code{mnes}, \code{impl_volatility});
-optionally \code{rate} if you don’t pass \code{rate} explicitly.}
+\item{cols_map}{Optional named list mapping required columns in \code{group_df} to the
+expected names, e.g. \code{list(id = "ID", date = "Date", days = "Days", rate = "Rate", mnes = "M", impl_volatility = "IV")}.}
 }
 \value{
 A one-row tibble with \code{id}, \code{date}, \code{days} and all qmoms metrics.
 }
 \description{
-Accepts one (id, date, days) surface and returns a one-row tibble with
+Accepts one (id, date, days) option surface and returns a one-row tibble with
 the keys plus all qmoms metrics. Column names can be remapped via \code{cols_map}.
 }
 \examples{
-g <- subset(qmoms_surface, id == qmoms_surface$id[1] & days == qmoms_surface$days[1])
+g_all <- get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface)
+g <- subset(g_all, id == g_all$id[1] & days == g_all$days[1])
 qmoms_compute_bygroup(list(g, rq_default_params()))
+
 }
