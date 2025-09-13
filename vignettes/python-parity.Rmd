@@ -13,48 +13,43 @@ knitr::opts_chunk$set(
   comment  = ">"
 )
 ```
-
 ```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY","0"), "1") &&
           requireNamespace("reticulate", quietly=TRUE)
 why <- NULL
+
 if (has_py) {
   ok <- FALSE
-  err <- NULL
   try({
     rp <- Sys.getenv("RETICULATE_PYTHON")
     if (nzchar(rp)) {
-      reticulate::use_python(rp, required=TRUE)
+      reticulate::use_python(rp, required = TRUE)
     } else {
       venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
       if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
-      reticulate::use_virtualenv(venv, required=TRUE)
+      reticulate::use_virtualenv(venv, required = TRUE)
     }
-    # show which interpreter rmarkdown is actually using
-    reticulate::py_run_string('import sys; print("Knit using:", sys.executable)')
 
-    # Try imports separately to get a clear error
-    try(reticulate::py_run_string('import numpy'), silent = TRUE)
-    try(reticulate::py_run_string('import qmoms'), silent = TRUE)
+    # 1) import numpy and add the NumPy 2.x alias shim
+    reticulate::py_run_string(
+      "import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan"
+    )
 
-    # If either failed, raise a combined message
-    reticulate::py_run_string('import importlib; mod_err=None')
+    # 2) only now import qmoms (it may rely on np.NAN)
+    reticulate::py_run_string("import qmoms")
+
     ok <- TRUE
   }, silent = TRUE)
-  if (!ok) {
-    has_py <- FALSE
-    why <- "Could not import numpy/qmoms in vignette session."
-  }
+  if (!ok) { has_py <- FALSE; why <- "Could not import numpy/qmoms." }
 } else {
-  why <- "RQMOMS_BUILD_PY != 1 or 'reticulate' missing."
+  why <- "RQMOMS_BUILD_PY != 1 or 'reticulate' not installed."
 }
 
 if (!has_py) {
   cat('<div class="alert alert-warning" role="alert"><b>Python parity is disabled.</b> ',
-      'Set <code>RQMOMS_BUILD_PY=1</code> and either <code>RETICULATE_PYTHON</code> ',
-      'or <code>RQMOMS_VENV</code>. ',
-      if (!is.null(why)) paste0('(', why, ')'),
-      '</div>')
+      'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
+      '<code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>. ',
+      if (!is.null(why)) paste0('(', why, ')'), '</div>')
 }
 
 ```
