@@ -2,7 +2,9 @@ url: https://sstoeckl.github.io/rqmoms
 template:
   bootstrap: 5
 
-# Articles config: tell pkgdown to copy our pre-rendered article "as is"
 articles:
-  as_is:
-    - python-parity
+  - title: Parity
+    contents:
+      - "python-parity"
+    as_is:
+      - "python-parity"
