@@ -127,15 +127,7 @@ str(res)
 First, merge/interpolate rates into the surface:
 
 ``` r
-library(dplyr)
-> 
-> Attache Paket: 'dplyr'
-> Die folgenden Objekte sind maskiert von 'package:stats':
-> 
->     filter, lag
-> Die folgenden Objekte sind maskiert von 'package:base':
-> 
->     intersect, setdiff, setequal, union
+suppressMessages(library(dplyr))
 
 # exact-maturity rate interpolation by date
 surf_r <- get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface)
@@ -208,16 +200,10 @@ res_bygroup2 <- surf_r |>
   dplyr::bind_rows()
 
 # Same result (up to column order)
-dplyr::all_equal(
+all.equal(
   dplyr::arrange(res_bygroup,  id, date, days),
   dplyr::arrange(res_bygroup2, id, date, days)
 )
-> Warning: `all_equal()` was deprecated in dplyr 1.1.0.
-> ℹ Please use `all.equal()` instead.
-> ℹ And manually order the rows/cols as needed
-> This warning is displayed once every 8 hours.
-> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-> generated.
 > [1] TRUE
 ```
 

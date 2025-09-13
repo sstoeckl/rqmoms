@@ -88,7 +88,7 @@ str(res)
 First, merge/interpolate rates into the surface:
 
 ```{r}
-library(dplyr)
+suppressMessages(library(dplyr))
 
 # exact-maturity rate interpolation by date
 surf_r <- get_rate_for_maturity(qmoms_zerocd, df_surf = qmoms_surface)
@@ -140,7 +140,7 @@ res_bygroup2 <- surf_r |>
   dplyr::bind_rows()
 
 # Same result (up to column order)
-dplyr::all_equal(
+all.equal(
   dplyr::arrange(res_bygroup,  id, date, days),
   dplyr::arrange(res_bygroup2, id, date, days)
 )
