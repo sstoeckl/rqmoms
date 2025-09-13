@@ -5,7 +5,4 @@ template:
 # Articles config: tell pkgdown to copy our pre-rendered article "as is"
 articles:
   as_is:
-    - python-parity        # <- slug (basename of the Rmd without extension)
-  contents:
-    - python-parity        # <- must be a STRING slug, not a map
-
+    - python-parity
