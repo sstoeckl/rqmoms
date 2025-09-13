@@ -1,0 +1,78 @@
+name: reticulate-venv-probe
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: reticulate-venv-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout (shallow)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up R (Posit RSPM)
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install reticulate only (fast)
+        run: Rscript -e 'install.packages("reticulate")'
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Create venv + install numpy & qmoms (GitHub)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python -m venv python/.venv
+          source python/.venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy tqdm
+          python -m pip install "git+https://github.com/vilkovgr/qmoms@main"
+          # quick sanity (shell-side)
+          python - <<'PY'
+import sys, numpy, qmoms
+print("VENV Python:", sys.executable)
+print("numpy:", numpy.__version__)
+print("qmoms import: OK")
+PY
+
+      - name: Probe reticulate ↔ venv binding (R)
+        # Important: start R with a clean env for RETICULATE_PYTHON
+        env:
+          RETICULATE_PYTHON: ""
+        run: |
+          Rscript - <<'RS'
+          # 1) Never inherit a host/toolcache pin
+          Sys.unsetenv("RETICULATE_PYTHON")
+          venv <- "python/.venv"
+
+          # 2) Bind venv BEFORE any reticulate init
+          stopifnot(requireNamespace("reticulate", quietly = TRUE))
+          reticulate::use_virtualenv(venv, required = TRUE)
+
+          # 3) Show what we actually bound to
+          cfg <- reticulate::py_discover_config()
+          print(cfg)
+
+          # 4) Verify imports truly come from the venv
+          reticulate::py_run_string('import sys, numpy, qmoms; print("R sees Python:", sys.executable); print("R sees numpy:", numpy.__version__)')
+
+          # 5) Hard assertions so the job fails if not venv
+          py <- reticulate::py_eval("sys.executable")
+          if (!grepl("/python/.venv/", py, fixed = TRUE)) {
+            stop("Not using venv interpreter: ", py)
+          }
+          RS
