@@ -1,12 +1,6 @@
 ---
 title: "Python parity: rqmoms vs vilkovgr/qmoms"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Python parity: rqmoms vs vilkovgr/qmoms}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-pkgdown:
-  as_is: true
+output: rmarkdown::html_document
 ---
 
 ```{r setup, include=FALSE}

@@ -40,51 +40,26 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install numpy + qmoms into this Python
-        shell: bash
+      - name: Install qmoms + numpy into the runner’s Python
         run: |
-          set -euxo pipefail
           python -m pip install --upgrade pip
-          python -m pip install numpy pandas scipy tqdm
-          python -m pip install "git+https://github.com/vilkovgr/qmoms@main"
-          python - <<'PY'
-          import sys, numpy, qmoms
-          print("PY:", sys.executable)
-          print("NumPy:", numpy.__version__)
-          print("qmoms import: OK")
-          PY
+          python -m pip install numpy pandas scipy tqdm "git+https://github.com/vilkovgr/qmoms@main"
 
-      # Important: run clean R sessions and pin reticulate to the toolcache python
-      - name: Pre-render parity article and build site (same session, Python bound)
+      - name: Render article + build site in one session (Python bound)
         env:
-          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
-          R_ENVIRON_USER: /dev/null
-          R_PROFILE_USER: /dev/null
           RQMOMS_BUILD_PY: "1"
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
-          Rscript --vanilla - <<'RS'
-          stopifnot(requireNamespace("reticulate", quietly=TRUE))
-          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
+          Rscript -e 'stopifnot(requireNamespace("reticulate", quietly=TRUE));
+                      reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE);
+                      reticulate::py_discover_config();
+                      # If needed, add NumPy 2.x shim here:
+                      reticulate::py_run_string("import numpy as np; np.NAN = getattr(np, \"NAN\", np.nan)");
+                      # Knit article (executes Python now)
+                      rmarkdown::render("vignettes/python-parity.Rmd", output_dir="vignettes", clean=TRUE, envir=new.env());
+                      # Build site in the same process (so reticulate stays bound)
+                      pkgdown::build_site_github_pages(new_process=FALSE, install=FALSE)'
 
-          # Preflight + NumPy 2.x shim
-          reticulate::py_run_string('import sys; print("PY:", sys.executable)')
-          reticulate::py_run_string('import numpy as np; print("NumPy:", np.__version__)')
-          reticulate::py_run_string('import numpy as np; np.NAN = getattr(np,"NAN", np.nan)')
-          reticulate::py_run_string('import qmoms; print("qmoms:", getattr(qmoms,"__file__", "built-in"))')
-
-          # 1) Pre-render in THIS process (creates vignettes/pythonparity.html)
-          rmarkdown::render("vignettes/pythonparity.Rmd",
-                            output_dir = "vignettes",
-                            clean = TRUE, envir = new.env())
-          print(file.exists("vignettes/pythonparity.html"))
-
-          # 2) Rmd temporär wegparken, damit pkgdown NICHT neu knitttet
-          if (file.exists("vignettes/pythonparity.Rmd"))
-          file.rename("vignettes/pythonparity.Rmd", "vignettes/pythonparity.Rmd.off")
-
-          # 3) Build the site (pkgdown will copy HTML because pkgdown: as_is: true)
-          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
-          RS
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
