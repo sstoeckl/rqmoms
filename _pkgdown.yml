@@ -6,4 +6,4 @@ articles:
 - title: Parity with Python
   navbar: ~
   contents:
-  - python-parity
+  - "python-parity"
