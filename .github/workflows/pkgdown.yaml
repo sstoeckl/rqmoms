@@ -72,15 +72,15 @@ jobs:
           reticulate::py_run_string('import numpy as np; np.NAN = getattr(np,"NAN", np.nan)')
           reticulate::py_run_string('import qmoms; print("qmoms:", getattr(qmoms,"__file__", "built-in"))')
 
-          # 1) Vor-rendern (liefert vignettes/python-parity.html)
-          rmarkdown::render("vignettes/python-parity.Rmd",
+          # 1) Vor-rendern (liefert vignettes/pythonparity.html)
+          rmarkdown::render("vignettes/pythonparity.Rmd",
                             output_dir = "vignettes",
                             clean = TRUE, envir = new.env())
-          print(file.exists("vignettes/python-parity.html"))
+          print(file.exists("vignettes/pythonparity.html"))
 
           # 2) Rmd temporär wegparken, damit pkgdown NICHT neu knitttet
-          if (file.exists("vignettes/python-parity.Rmd"))
-            file.rename("vignettes/python-parity.Rmd", "vignettes/python-parity.Rmd.off")
+          if (file.exists("vignettes/pythonparity.Rmd"))
+            file.rename("vignettes/pythonparity.Rmd", "vignettes/pythonparity.Rmd.off")
 
           # 3) Site im selben Prozess bauen
           pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
