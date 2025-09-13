@@ -91,7 +91,7 @@ jobs:
         run: |
           Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::test()'
 
-      - name: Build vignettes + pkgdown (with comparison)
+      - name: Build vignettes (with comparison)
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
           R_ENVIRON_USER: /dev/null

@@ -13,44 +13,58 @@ knitr::opts_chunk$set(
   comment  = ">"
 )
 ```
-```{r detect, include=FALSE}
+
+```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# run with Python only when explicitly enabled
 has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1") &&
           requireNamespace("reticulate", quietly = TRUE)
 
+why <- NULL
 if (has_py) {
   ok <- FALSE
   try({
     rp <- Sys.getenv("RETICULATE_PYTHON")
     if (nzchar(rp)) {
+      # CI: bind to toolcache python prepared by setup-python
       reticulate::use_python(rp, required = TRUE)
     } else {
+      # Local: optional virtualenv
       venv <- Sys.getenv("RQMOMS_VENV", file.path("python", ".venv"))
+      if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
       reticulate::use_virtualenv(venv, required = TRUE)
     }
-    reticulate::py_run_string("import numpy, qmoms")  # verify both
+    # sanity: both must import
+    reticulate::py_run_string("import numpy, qmoms")
     ok <- TRUE
   }, silent = TRUE)
-  has_py <- ok
+  if (!ok) {
+    has_py <- FALSE
+    why <- "Could not import numpy/qmoms in the configured Python."
+  }
+} else {
+  if (!requireNamespace("reticulate", quietly = TRUE))
+    why <- "R package 'reticulate' is not installed."
+  else
+    why <- "RQMOMS_BUILD_PY != 1."
 }
 
 if (!has_py) {
-  cat("**Python parity is disabled.** Set `RQMOMS_BUILD_PY=1` and either\n",
-      "`RETICULATE_PYTHON` to a Python with `qmoms`, or `RQMOMS_VENV` to a venv.\n")
+  cat('<div class="alert alert-warning" role="alert">',
+      '<strong>Python parity is disabled.</strong> ',
+      'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
+      '<code>RETICULATE_PYTHON</code> (toolcache/system Python with qmoms installed) ',
+      'or <code>RQMOMS_VENV</code> (a virtualenv). ',
+      if (!is.null(why)) paste0('(', why, ')'),
+      '</div>')
 }
-
 ```
 
 ## Goal
 
 This vignette demonstrates **numerical parity** between the pure-R implementation in `rqmoms` and the original Python package **`vilkovgr/qmoms`** for the same inputs and parameters.
 
-It is safe to knit on CI/CRAN (Python parts are skipped by default).
-To **enable** the Python comparison locally:
-
-1. Create a virtualenv at `python/.venv` and install the Python repo (editable) into it, or set `RQMOMS_VENV` to your venv path.
-2. Set `RQMOMS_BUILD_PY=1` in your session (or `.Renviron`).
-
 For a proper setup of python for testing refer to this script: "dev/01-setup-python.R"
+
 ---
 
 ## Libraries & packaged data
@@ -62,38 +76,6 @@ library(dplyr)
 # Packaged datasets ship with the package
 str(qmoms_surface)
 head(qmoms_zerocd)
-```
-
----
-
-## Detect (optional) Python reference
-
-```{r py-detect, message=FALSE, warning=FALSE}
-has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1")
-if (has_py) {
-  venv <- Sys.getenv("RQMOMS_VENV", file.path("python", ".venv"))
-  ok <- FALSE
-  try({
-    reticulate::use_virtualenv(venv, required = TRUE)
-    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
-    # Prefer submodule path if present
-    srcs <- c(file.path("python","qmoms_src"), file.path("python","qmoms"))
-    srcs <- srcs[dir.exists(srcs)]
-    if (length(srcs)) {
-      reticulate::py_run_string(sprintf(
-        "import sys; sys.path.insert(0, r'%s')",
-        normalizePath(srcs[[1]], winslash = "/", mustWork = TRUE)
-      ))
-    }
-    reticulate::import("qmoms")
-    ok <- TRUE
-  }, silent = TRUE)
-  has_py <- ok
-}
-
-if (!has_py) {
-  cat("**Python parity is disabled.** Set `RQMOMS_BUILD_PY=1` and point `RQMOMS_VENV` to a valid virtualenv to run the comparison.\n")
-}
 ```
 
 For convenience we define a small wrapper (only used when `has_py = TRUE`):
