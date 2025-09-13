@@ -24,7 +24,6 @@ jobs:
           needs: check
 
       - name: Set up Python 3.11 (toolcache)
-        id: py
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -45,15 +44,20 @@ jobs:
           print("qmoms import: OK")
           PY
 
-      - name: Probe reticulate binding to toolcache Python
+      - name: Probe reticulate binding (clean R session)
         env:
-          # setup-python exposes this path for the chosen interpreter
+          # bind to the exact toolcache interpreter selected by setup-python
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
+          # neutralize project/user startup files that may override RETICULATE_PYTHON
+          R_ENVIRON_USER: /dev/null
+          R_PROFILE_USER: /dev/null
         run: |
-          Rscript - <<'RS'
-          # bind to the exact toolcache interpreter (already has numpy + qmoms)
+          Rscript --vanilla - <<'RS'
           stopifnot(requireNamespace("reticulate", quietly=TRUE))
-          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
+          cat("RETICULATE_PYTHON=", Sys.getenv("RETICULATE_PYTHON"), "\n", sep="")
+          reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
           reticulate::py_discover_config()
           reticulate::py_run_string('import sys, numpy, qmoms; print("R sees:", sys.executable); print("NumPy:", numpy.__version__); print("qmoms: OK")')
+          py <- reticulate::py_eval("sys.executable")
+          if (!grepl("/opt/hostedtoolcache/", py, fixed=TRUE)) stop("Not using toolcache python: ", py)
           RS
