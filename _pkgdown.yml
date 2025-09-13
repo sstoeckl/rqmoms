@@ -3,6 +3,6 @@ template:
   bootstrap: 5
 
 articles:
-  - title: Parity
-    contents:
-      - "python-parity"
+- title: Parity
+  contents:
+  - python-parity
