@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>rqmoms • rqmoms</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -13,7 +18,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="rqmoms">
 <meta name="description" content="Pure R re-implementation of option-implied moments (Python 'qmoms').">
 <meta property="og:description" content="Pure R re-implementation of option-implied moments (Python 'qmoms').">
-<meta property="og:image" content="https://sstoeckl.github.io/rqmoms/logo.png">
+<meta property="og:image" content="https://www.sebastianstoeckl.com/rqmoms/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -42,7 +47,7 @@
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/&lt;YOUR_GH_USERNAME&gt;/rqmoms" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/sstoeckl/rqmoms" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -83,7 +88,7 @@
 <div class="section level2">
 <h2 id="packaged-example-data">Packaged example data<a class="anchor" aria-label="anchor" href="#packaged-example-data"></a>
 </h2>
-<p>This package ships two datasets (loaded automatically with <code><a href="https://sstoeckl.github.io/rqmoms/">library(rqmoms)</a></code>):</p>
+<p>This package ships two datasets (loaded automatically with <code><a href="https://sstoeckl.github.io/rqmoms/" class="external-link">library(rqmoms)</a></code>):</p>
 <ul>
 <li>
 <code>qmoms_surface</code> — IV surface snapshots (columns: <code>id</code>, <code>date</code>, <code>days</code>, <code>mnes</code>, <code>impl_volatility</code>, optional: <code>delta</code>, <code>best_bid</code>, <code>best_offer</code>, <code>open_interest</code>, <code>prem</code>)</li>
@@ -158,18 +163,11 @@
 <h2 id="whole-dataframe--grouped-compute-mirrors-python-readme">Whole-dataframe — grouped compute (mirrors Python README)<a class="anchor" aria-label="anchor" href="#whole-dataframe--grouped-compute-mirrors-python-readme"></a>
 </h2>
 <p>First, merge/interpolate rates into the surface:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="sc">&gt;</span> </span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="er">&gt;</span> Attache Paket<span class="sc">:</span> <span class="st">'dplyr'</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="sc">&gt;</span> Die folgenden Objekte sind maskiert von <span class="st">'package:stats'</span><span class="sc">:</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="er">&gt;</span> </span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="er">&gt;</span>     filter, lag</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="sc">&gt;</span> Die folgenden Objekte sind maskiert von <span class="st">'package:base'</span><span class="sc">:</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="er">&gt;</span> </span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="er">&gt;</span>     intersect, setdiff, setequal, union</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># exact-maturity rate interpolation by date</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>surf_r <span class="ot">&lt;-</span> <span class="fu">get_rate_for_maturity</span>(qmoms_zerocd, <span class="at">df_surf =</span> qmoms_surface)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># exact-maturity rate interpolation by date</span></span>
+<span><span class="va">surf_r</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_rate_for_maturity.html">get_rate_for_maturity</a></span><span class="op">(</span><span class="va">qmoms_zerocd</span>, df_surf <span class="op">=</span> <span class="va">qmoms_surface</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="a-dplyr-group_map">A) dplyr <code>group_map()</code>
 <a class="anchor" aria-label="anchor" href="#a-dplyr-group_map"></a>
@@ -237,17 +235,11 @@
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">bind_rows</span>()</span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
 <span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co"># Same result (up to column order)</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">all_equal</span>(</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="fu">all.equal</span>(</span>
 <span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(res_bygroup,  id, date, days),</span>
 <span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(res_bygroup2, id, date, days)</span>
 <span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>)</span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="sc">&gt;</span> Warning<span class="sc">:</span> <span class="st">`</span><span class="at">all_equal()</span><span class="st">`</span> was deprecated <span class="cf">in</span> dplyr <span class="dv">1</span>.<span class="dv">1</span>.<span class="fl">0.</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="sc">&gt;</span> ℹ Please use <span class="st">`</span><span class="at">all.equal()</span><span class="st">`</span> instead.</span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="sc">&gt;</span> ℹ And manually order the rows<span class="sc">/</span>cols as needed</span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="sc">&gt;</span> This warning is displayed once every <span class="dv">8</span> hours.</span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="sc">&gt;</span> Call <span class="st">`</span><span class="at">lifecycle::last_lifecycle_warnings()</span><span class="st">`</span> to see where this warning was</span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="sc">&gt;</span> generated.</span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="cn">TRUE</span></span></code></pre></div>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="cn">TRUE</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="c-column-mapping-example-mirrors-python-columndtype-mapping">C) Column mapping example (mirrors Python column/dtype mapping)<a class="anchor" aria-label="anchor" href="#c-column-mapping-example-mirrors-python-columndtype-mapping"></a>
