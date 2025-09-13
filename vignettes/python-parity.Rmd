@@ -13,33 +13,39 @@ knitr::opts_chunk$set(
   comment  = ">"
 )
 ```
+
 ```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY","0"), "1") &&
-          requireNamespace("reticulate", quietly=TRUE)
+          requireNamespace("reticulate", quietly = TRUE)
 why <- NULL
 
 if (has_py) {
   ok <- FALSE
   try({
-    rp <- Sys.getenv("RETICULATE_PYTHON")
-    if (nzchar(rp)) {
-      reticulate::use_python(rp, required = TRUE)
-    } else {
-      venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
-      if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
-      reticulate::use_virtualenv(venv, required = TRUE)
+    # Falls reticulate noch nicht gebunden ist: jetzt binden
+    if (!reticulate::py_available(initialize = FALSE)) {
+      rp <- Sys.getenv("RETICULATE_PYTHON")
+      if (nzchar(rp)) {
+        reticulate::use_python(rp, required = TRUE)
+      } else {
+        venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
+        if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
+        reticulate::use_virtualenv(venv, required = TRUE)
+      }
     }
 
-    # 1) import numpy and add the NumPy 2.x alias shim
-    reticulate::py_run_string(
-      "import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan"
-    )
+    # Jetzt initialisieren und prüfen
+    if (!reticulate::py_available(initialize = TRUE)) stop("reticulate not initialized")
 
-    # 2) only now import qmoms (it may rely on np.NAN)
+    # NumPy 2.x Shim (qmoms erwartet np.NAN)
+    reticulate::py_run_string("import numpy as np\nif not hasattr(np,'NAN'): np.NAN = np.nan")
+
+    # qmoms importieren
     reticulate::py_run_string("import qmoms")
 
     ok <- TRUE
   }, silent = TRUE)
+
   if (!ok) { has_py <- FALSE; why <- "Could not import numpy/qmoms." }
 } else {
   why <- "RQMOMS_BUILD_PY != 1 or 'reticulate' not installed."
@@ -47,8 +53,8 @@ if (has_py) {
 
 if (!has_py) {
   cat('<div class="alert alert-warning" role="alert"><b>Python parity is disabled.</b> ',
-      'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
-      '<code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>. ',
+      'Set <code>RQMOMS_BUILD_PY=1</code> and either <code>RETICULATE_PYTHON</code> ',
+      'or <code>RQMOMS_VENV</code>. ',
       if (!is.null(why)) paste0('(', why, ')'), '</div>')
 }
 

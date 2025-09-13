@@ -64,17 +64,27 @@ jobs:
         run: |
           Rscript --vanilla - <<'RS'
           stopifnot(requireNamespace("reticulate", quietly=TRUE))
+
+          # 0) Python binden
           reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
 
-          # 1) Pre-render the parity vignette (this writes vignettes/python-parity.html)
+          # 1) Preflight: wirklich dieses Python + Pakete erreichbar?
+          reticulate::py_run_string('import sys; print("PY:", sys.executable)')
+          reticulate::py_run_string('import numpy as np; print("NumPy:", np.__version__)')
+          # NumPy 2.x Shim VOR qmoms
+          reticulate::py_run_string('import numpy as np; np.NAN = getattr(np,"NAN", np.nan)')
+          reticulate::py_run_string('import qmoms; import importlib, os; print("qmoms:", getattr(qmoms,"__file__", "built-in"))')
+
+          # 2) Vignette vor-rendern (im GLEICHEN Prozess)
           rmarkdown::render(
             "vignettes/python-parity.Rmd",
             output_dir = "vignettes",
             clean      = TRUE,
             envir      = new.env()
           )
+          print(file.exists("vignettes/python-parity.html"))
 
-          # 2) Build the whole site in THIS session (no extra processes)
+          # 3) Site bauen (keine neue R-Session)
           pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
           RS
 
