@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+articles:
+  as_is: true
+  contents:
+    - python-parity
+
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
@@ -55,7 +60,7 @@ jobs:
           PY
 
       # Important: run clean R sessions and pin reticulate to the toolcache python
-      - name: Build parity article (pre-render) and site
+      - name: Pre-render parity article and build site (same session, Python bound)
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
           R_ENVIRON_USER: /dev/null
@@ -66,7 +71,7 @@ jobs:
           stopifnot(requireNamespace("reticulate", quietly=TRUE))
           reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
 
-          # 1) Pre-render the vignette to HTML in this (Python-bound) session
+          # 1) Pre-render the parity vignette (this writes vignettes/python-parity.html)
           rmarkdown::render(
             "vignettes/python-parity.Rmd",
             output_dir = "vignettes",
@@ -74,14 +79,9 @@ jobs:
             envir      = new.env()
           )
 
-          # 2) Build site using the pre-rendered HTML (no re-knit)
-          pkgdown::build_articles(as_is = TRUE, new_process = FALSE)
-          pkgdown::build_reference()
-          pkgdown::build_home()
-          pkgdown::build_news()
-          pkgdown::build_search_index()
+          # 2) Build the whole site in THIS session (no extra processes)
+          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
           RS
-
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
