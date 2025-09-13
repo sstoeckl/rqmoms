@@ -4,3 +4,9 @@ template:
   bootswatch: spacelab
 navbar:
   bg: primary
+# tell pkgdown to use pre-rendered vignette HTML "as is"
+articles:
+  as_is: true
+  contents:
+    - python-parity   # <- slug = basename of vignettes/python-parity.Rmd
+

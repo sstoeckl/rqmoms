@@ -8,11 +8,6 @@ on:
 permissions:
   contents: write
 
-articles:
-  as_is: true
-  contents:
-    - python-parity
-
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
