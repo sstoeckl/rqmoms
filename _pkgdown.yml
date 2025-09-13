@@ -2,11 +2,13 @@ url: https://www.sebastianstoeckl.com/rqmoms/
 template:
   bootstrap: 5
   bootswatch: spacelab
+
 navbar:
   bg: primary
-# tell pkgdown to use pre-rendered vignette HTML "as is"
+
 articles:
-  as_is:
-    - vignettes/python-parity.html
-  contents:
-    - python-parity
+  - title: Parity
+    contents:
+      - file: vignettes/python-parity.html   # path to the pre-rendered HTML
+        as_is: true                          # copy as-is, no re-knit
+        name: Python–R parity                # title shown in the site
