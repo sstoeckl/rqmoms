@@ -1,7 +1,9 @@
 url: https://www.sebastianstoeckl.com/rqmoms/
 template:
   bootstrap: 5
-
+  bootswatch: spacelab
+navbar:
+  bg: primary
 articles:
 - title: Parity with Python
   navbar: ~

@@ -5,6 +5,8 @@ vignette: >
   %\VignetteIndexEntry{Python parity: rqmoms vs vilkovgr/qmoms}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+pkgdown:
+  as_is: true
 ---
 
 ```{r setup, include=FALSE}

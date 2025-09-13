@@ -66,26 +66,21 @@ jobs:
           stopifnot(requireNamespace("reticulate", quietly=TRUE))
           reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
 
-          # Preflight + NumPy-2 Shim
+          # Preflight + NumPy 2.x shim
           reticulate::py_run_string('import sys; print("PY:", sys.executable)')
           reticulate::py_run_string('import numpy as np; print("NumPy:", np.__version__)')
           reticulate::py_run_string('import numpy as np; np.NAN = getattr(np,"NAN", np.nan)')
           reticulate::py_run_string('import qmoms; print("qmoms:", getattr(qmoms,"__file__", "built-in"))')
 
-          # 1) Vor-rendern (liefert vignettes/pythonparity.html)
+          # 1) Pre-render in THIS process (creates vignettes/pythonparity.html)
           rmarkdown::render("vignettes/pythonparity.Rmd",
                             output_dir = "vignettes",
                             clean = TRUE, envir = new.env())
           print(file.exists("vignettes/pythonparity.html"))
 
-          # 2) Rmd temporär wegparken, damit pkgdown NICHT neu knitttet
-          if (file.exists("vignettes/pythonparity.Rmd"))
-            file.rename("vignettes/pythonparity.Rmd", "vignettes/pythonparity.Rmd.off")
-
-          # 3) Site im selben Prozess bauen
+          # 2) Build the site (pkgdown will copy HTML because pkgdown: as_is: true)
           pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
           RS
-
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
