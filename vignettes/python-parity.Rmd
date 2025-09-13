@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r py-detect, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY","0"), "1") &&
+has_py <- identical(Sys.getenv("RQMOMS_BUILD_PY", "0"), "1") &&
           requireNamespace("reticulate", quietly = TRUE)
 why <- NULL
 if (has_py) {
@@ -25,7 +25,7 @@ if (has_py) {
     if (nzchar(rp)) {
       reticulate::use_python(rp, required = TRUE)
     } else {
-      venv <- Sys.getenv("RQMOMS_VENV", file.path("python",".venv"))
+      venv <- Sys.getenv("RQMOMS_VENV", file.path("python", ".venv"))
       if (!dir.exists(venv)) stop("RQMOMS_VENV not found: ", venv)
       reticulate::use_virtualenv(venv, required = TRUE)
     }
@@ -34,11 +34,9 @@ if (has_py) {
   }, silent = TRUE)
   if (!ok) { has_py <- FALSE; why <- "Could not import numpy/qmoms." }
 } else {
-  why <- "RQMOMS_BUILD_PY != 1 or reticulate not installed."
+  why <- "RQMOMS_BUILD_PY != 1 or 'reticulate' not installed."
 }
-if (!has_py) cat('<div class="alert alert-warning" role="alert"><b>Python parity is disabled.</b> ',
-                 'Set <code>RQMOMS_BUILD_PY=1</code> and either ',
-                 '<code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>. ',
+if (!has_py) cat('<div class="alert alert-warning" role="alert"><b>Python parity is disabled.</b> Set <code>RQMOMS_BUILD_PY=1</code> and either <code>RETICULATE_PYTHON</code> or <code>RQMOMS_VENV</code>. ',
                  if (!is.null(why)) paste0('(', why, ')'), '</div>')
 ```
 
