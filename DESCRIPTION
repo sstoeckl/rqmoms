@@ -28,4 +28,4 @@ LazyDataCompression: xz
 Depends: 
     R (>= 3.5)
 VignetteBuilder: knitr
-Config/Needs/website: rmarkdown
+Config/Needs/website: rmarkdown, dplyr
