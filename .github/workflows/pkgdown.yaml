@@ -45,19 +45,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy tqdm "git+https://github.com/vilkovgr/qmoms@main"
 
-      - name: Render article + build site in one session (Python bound)
+      - name: Build pkgdown site (Python bound, same process)
         env:
           RQMOMS_BUILD_PY: "1"
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
           Rscript -e 'stopifnot(requireNamespace("reticulate", quietly=TRUE));
                       reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE);
-                      reticulate::py_discover_config();
-                      # If needed, add NumPy 2.x shim here:
                       reticulate::py_run_string("import numpy as np; np.NAN = getattr(np, \"NAN\", np.nan)");
-                      # Knit article (executes Python now)
-                      rmarkdown::render("vignettes/python-parity.Rmd", output_dir="vignettes", clean=TRUE, envir=new.env());
-                      # Build site in the same process (so reticulate stays bound)
                       pkgdown::build_site_github_pages(new_process=FALSE, install=FALSE)'
 
 

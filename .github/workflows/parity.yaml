@@ -11,7 +11,7 @@ on:
     - cron: "0 3 * * 1"  # optional: weekly run
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   parity:
@@ -40,10 +40,8 @@ jobs:
         with:
           extra-packages: |
             any::devtools
-            any::pkgdown
-            any::rmarkdown
             any::reticulate
-          needs: website
+          needs: check
 
       - name: Set up Python 3.11 (toolcache)
         uses: actions/setup-python@v5
@@ -90,19 +88,3 @@ jobs:
           RQMOMS_BUILD_PY: "1"
         run: |
           Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::test()'
-
-      - name: Build vignettes (with comparison)
-        env:
-          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
-          R_ENVIRON_USER: /dev/null
-          R_PROFILE_USER: /dev/null
-          RQMOMS_BUILD_PY: "1"
-        run: |
-          Rscript --vanilla -e 'reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required=TRUE); devtools::build_vignettes()'
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          folder: docs
