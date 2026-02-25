@@ -4,6 +4,8 @@ template:
   bootswatch: spacelab
 navbar:
   bg: primary
+development:
+  mode: auto
 articles:
 - title: Parity with Python
   navbar: ~
