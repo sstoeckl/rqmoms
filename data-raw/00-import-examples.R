@@ -40,20 +40,18 @@ stopifnot(file.exists(surf_path), file.exists(rate_path))
 surf_raw <- readr::read_csv(surf_path, show_col_types = FALSE)
 rate_raw <- readr::read_csv(rate_path, show_col_types = FALSE)
 
-# Convert rate to decimal if the file is in percent
-if (max(rate$rate, na.rm = TRUE) > 1) rate$rate <- rate$rate / 100
-
-x <- c("04JAN1996", "15FEB1997")
-
 old <- Sys.getlocale("LC_TIME")
 Sys.setlocale("LC_TIME", "C")
 # Standardize types
+# delta: CSV stores integer pct (e.g. -20 = -0.20); convert to decimal to match Python load_data()
+# rate:  CSV stores percent (e.g. 5.5 = 5.5%); convert to decimal to match Python load_data()
 surf <- surf_raw |>
   mutate(
     id = as.integer(id),
     date = as.Date(date, format="%d%b%Y"),
     days = as.integer(days),
     mnes = as.numeric(mnes),
+    delta = as.numeric(delta) / 100,
     impl_volatility = as.numeric(impl_volatility)
   ) |>
   arrange(id, date, days, mnes) |>
@@ -63,7 +61,7 @@ rate <- rate_raw |>
   mutate(
     date = as.Date(date, format="%d%b%Y"),
     days = as.integer(days),
-    rate = as.numeric(rate)
+    rate = as.numeric(rate) / 100
   ) |>
   arrange(date, days) |>
   as_tibble()

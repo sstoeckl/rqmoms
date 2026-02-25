@@ -37,15 +37,19 @@ applySerial <- function(dfGrouped, func_main, params) {
 #' @export
 filter_options <- function(optdata, filter) {
   g1 <- (optdata$mnes >= filter$mnes_lim[1]) & (optdata$mnes <= filter$mnes_lim[2])
-  g2 <- (!is.null(optdata$delta)) & (optdata$delta >= filter$delta_call_lim[1]) & (optdata$delta <= filter$delta_call_lim[2])
-  g3 <- (!is.null(optdata$delta)) & (optdata$delta >= filter$delta_put_lim[1]) & (optdata$delta <= filter$delta_put_lim[2])
-  g1 <- g1 & (g2 | g3)
+  if ("delta" %in% names(optdata)) {
+    g2 <- (optdata$delta >= filter$delta_call_lim[1]) & (optdata$delta <= filter$delta_call_lim[2])
+    g3 <- (optdata$delta >= filter$delta_put_lim[1])  & (optdata$delta <= filter$delta_put_lim[2])
+    g1 <- g1 & (g2 | g3)
+  }
   if ("open_interest" %in% names(optdata)) g1 <- g1 & (optdata$open_interest >= filter$open_int_zero)
   if ("best_bid" %in% names(optdata)) {
     g1 <- g1 & (optdata$best_bid >= filter$best_bid_zero)
     if ("best_offer" %in% names(optdata)) g1 <- g1 & ((optdata$best_bid + optdata$best_offer)/2 >= filter$min_price)
   }
-  optdata[g1, , drop = FALSE][order(optdata$id[g1], optdata$date[g1], optdata$mnes[g1]), ]
+  sub <- optdata[g1, , drop = FALSE]
+  sort_cols <- intersect(c("id", "date", "mnes"), names(sub))
+  if (length(sort_cols)) sub[do.call(order, sub[sort_cols]), , drop = FALSE] else sub
 }
 
 
