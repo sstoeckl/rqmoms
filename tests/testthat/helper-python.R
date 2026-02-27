@@ -11,12 +11,17 @@ if (requireNamespace("reticulate", quietly = TRUE)) {
   venv <- Sys.getenv("RQMOMS_VENV", "python/.venv")
 
   try({
-    if (nzchar(rp)) {
-      # Bind to the exact interpreter our workflow installed into
-      reticulate::use_python(rp, required = TRUE)
-    } else if (nzchar(venv)) {
-      # Local dev: use the project venv if it exists
-      reticulate::use_virtualenv(venv, required = TRUE)
+    # Only configure Python if it hasn't been initialized yet.
+    # (If .onLoad already bound to the local venv, skip to avoid
+    #  "already initialized" errors when paths differ by absolute/relative form.)
+    if (!reticulate::py_available(initialize = FALSE)) {
+      if (nzchar(rp)) {
+        # Bind to the exact interpreter our workflow installed into
+        reticulate::use_python(rp, required = TRUE)
+      } else if (nzchar(venv)) {
+        # Local dev: use the project venv if it exists
+        reticulate::use_virtualenv(venv, required = TRUE)
+      }
     }
     # Initialize and verify
     has_py <- reticulate::py_available(initialize = TRUE)
